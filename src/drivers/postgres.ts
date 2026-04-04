@@ -47,6 +47,13 @@ function formatDataType(row: Record<string, unknown>): string {
   return udt
 }
 
+function toPgArray(val: unknown): string[] {
+  if (Array.isArray(val)) return val as string[]
+  if (typeof val === 'string' && val.startsWith('{'))
+    return val.slice(1, -1).split(',').filter(Boolean)
+  return []
+}
+
 function normalizePgPlan(plan: Record<string, unknown>): ExplainNode {
   const subPlans = (plan['Plans'] as Record<string, unknown>[] | undefined) ?? []
   return {
@@ -375,7 +382,7 @@ export class PostgresDriver implements IDriver {
       indexesByTable.get(t)!.push({
         name: r.indexname as string,
         unique: r.is_unique as boolean,
-        columns: (r.columns as string[]) ?? []
+        columns: toPgArray(r.columns)
       })
     }
 
