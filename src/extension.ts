@@ -12,7 +12,7 @@ import { closeAllSshTunnels } from './tunnel/sshTunnel'
 export function activate(context: vscode.ExtensionContext) {
   const connectionManager = new ConnectionManager(context)
   const connectionsProvider = new ConnectionsProvider(connectionManager)
-  const schemaProvider = new SchemaProvider()
+  const schemaProvider = new SchemaProvider(connectionManager, () => connectionsProvider.refresh())
 
   vscode.window.registerTreeDataProvider('datapilot.connections', connectionsProvider)
   vscode.window.registerTreeDataProvider('datapilot.schema', schemaProvider)
