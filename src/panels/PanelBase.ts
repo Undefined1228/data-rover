@@ -35,11 +35,18 @@ export abstract class PanelBase {
     const scriptUri = webview.asWebviewUri(
       vscode.Uri.joinPath(outWebviewUri, `${this.webviewEntry}.js`)
     )
-    const styleUri = webview.asWebviewUri(
+    const tailwindUri = webview.asWebviewUri(
+      vscode.Uri.joinPath(outWebviewUri, 'tailwind.css')
+    )
+    const entryStyleUri = webview.asWebviewUri(
       vscode.Uri.joinPath(outWebviewUri, `${this.webviewEntry}.css`)
     )
     const nonce = getNonce()
     const csp = `default-src 'none'; style-src ${webview.cspSource} 'unsafe-inline'; script-src 'nonce-${nonce}' ${webview.cspSource};`
+
+    const entryStyleExists = require('fs').existsSync(
+      vscode.Uri.joinPath(outWebviewUri, `${this.webviewEntry}.css`).fsPath
+    )
 
     return `<!DOCTYPE html>
 <html lang="ko">
@@ -47,7 +54,8 @@ export abstract class PanelBase {
   <meta charset="UTF-8">
   <meta http-equiv="Content-Security-Policy" content="${csp}">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <link rel="stylesheet" href="${styleUri}">
+  <link rel="stylesheet" href="${tailwindUri}">
+  ${entryStyleExists ? `<link rel="stylesheet" href="${entryStyleUri}">` : ''}
   <title>${this.title}</title>
 </head>
 <body>

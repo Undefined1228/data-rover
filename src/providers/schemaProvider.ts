@@ -13,7 +13,8 @@ export class ConnectionTreeItem extends vscode.TreeItem {
     isConnected: boolean
   ) {
     super(label, vscode.TreeItemCollapsibleState.Collapsed)
-    this.contextValue = isConnected ? 'schema-connection-active' : 'schema-connection'
+    const dbSuffix = dbType === 'postgresql' ? '-pg' : '-mysql'
+    this.contextValue = isConnected ? `schema-connection${dbSuffix}-active` : `schema-connection${dbSuffix}`
     this.iconPath = new vscode.ThemeIcon(
       'database',
       isConnected ? new vscode.ThemeColor('charts.green') : undefined
@@ -184,28 +185,27 @@ export class ColumnItem extends vscode.TreeItem {
 export class FKItem extends vscode.TreeItem {
   readonly nodeType = 'fk' as const
   constructor(public readonly fk: FKInfo) {
-    super(fk.constraintName, vscode.TreeItemCollapsibleState.None)
+    super(fk.constraintName, vscode.TreeItemCollapsibleState.Collapsed)
     this.contextValue = 'schema-fk'
     this.iconPath = new vscode.ThemeIcon('references')
-    this.description = `${fk.localColumns.join(', ')} → ${fk.refTable}(${fk.refColumns.join(', ')})`
-    this.tooltip = [
-      `제약명: ${fk.constraintName}`,
-      `${fk.localColumns.join(', ')} → ${fk.refSchema}.${fk.refTable}(${fk.refColumns.join(', ')})`,
-      `ON DELETE: ${fk.onDelete}`,
-      `ON UPDATE: ${fk.onUpdate}`,
-    ].join('\n')
   }
 }
 
 export class IndexItem extends vscode.TreeItem {
   readonly nodeType = 'index' as const
   constructor(public readonly index: IndexInfo) {
-    super(index.name, vscode.TreeItemCollapsibleState.None)
+    super(index.name, vscode.TreeItemCollapsibleState.Collapsed)
     this.contextValue = 'schema-index'
     this.iconPath = new vscode.ThemeIcon('list-ordered')
-    this.description = [index.unique ? 'UNIQUE' : '', index.columns.join(', ')]
-      .filter(Boolean)
-      .join(' · ')
+    this.description = index.unique ? 'UNIQUE' : undefined
+  }
+}
+
+class DetailItem extends vscode.TreeItem {
+  readonly nodeType = 'detail' as const
+  constructor(text: string) {
+    super(text, vscode.TreeItemCollapsibleState.None)
+    this.contextValue = 'schema-detail'
   }
 }
 
@@ -244,6 +244,7 @@ type SchemaNode =
   | ColumnItem
   | FKItem
   | IndexItem
+  | DetailItem
   | LoadingItem
   | ErrorItem
 
@@ -300,6 +301,18 @@ export class SchemaProvider implements vscode.TreeDataProvider<SchemaNode> {
     if (element.nodeType === 'column-group') return element.columns.map((c) => new ColumnItem(c))
     if (element.nodeType === 'fk-group') return element.fks.map((f) => new FKItem(f))
     if (element.nodeType === 'index-group') return element.indexes.map((i) => new IndexItem(i))
+    if (element.nodeType === 'fk') {
+      const { fk } = element
+      const items: DetailItem[] = [
+        new DetailItem(`${fk.localColumns.join(', ')} → ${fk.refSchema}.${fk.refTable}(${fk.refColumns.join(', ')})`),
+      ]
+      if (fk.onDelete !== 'NO ACTION') items.push(new DetailItem(`ON DELETE ${fk.onDelete}`))
+      if (fk.onUpdate !== 'NO ACTION') items.push(new DetailItem(`ON UPDATE ${fk.onUpdate}`))
+      return items
+    }
+    if (element.nodeType === 'index') {
+      return [new DetailItem(element.index.columns.join(', '))]
+    }
     return []
   }
 
@@ -332,7 +345,7 @@ export class SchemaProvider implements vscode.TreeDataProvider<SchemaNode> {
         .catch((err) => { this.schemaCache.set(key, err instanceof Error ? err : new Error(String(err))) })
         .finally(() => {
           this.loadingNodes.delete(key)
-          this._onDidChangeTreeData.fire(node)
+          this._onDidChangeTreeData.fire()
         })
     }
 

@@ -1,7 +1,36 @@
 @import "tailwindcss";
 
-body {
-  overflow: hidden;
+@theme inline {
+  --color-background:        var(--vscode-editor-background);
+  --color-foreground:        var(--vscode-editor-foreground);
+  --color-muted:             var(--vscode-sideBar-background);
+  --color-muted-foreground:  var(--vscode-descriptionForeground);
+  --color-border:            var(--vscode-widget-border);
+  --color-primary:           var(--vscode-button-background);
+  --color-primary-foreground:var(--vscode-button-foreground);
+  --color-accent:            var(--vscode-list-hoverBackground);
+  --color-accent-foreground: var(--vscode-foreground);
+  --color-destructive:       var(--vscode-errorForeground);
+  --color-popover:           var(--vscode-editorWidget-background);
+  --color-popover-foreground:var(--vscode-editor-foreground);
+}
+
+@layer base {
+  * {
+    box-sizing: border-box;
+  }
+  body {
+    background-color: var(--vscode-editor-background);
+    color: var(--vscode-editor-foreground);
+    font-family: var(--vscode-font-family);
+    font-size: var(--vscode-font-size);
+    overflow: hidden;
+  }
+}
+
+@layer utilities {
+  .cell-numeric  { color: var(--vscode-debugTokenExpression-number,  #79b8ff); }
+  .cell-datetime { color: var(--vscode-debugTokenExpression-string,   #9ecbff); }
 }
 
 #app {

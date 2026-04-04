@@ -19,7 +19,11 @@ export default defineConfig({
       output: {
         entryFileNames: '[name].js',
         chunkFileNames: 'chunks/[name]-[hash].js',
-        assetFileNames: '[name][extname]',
+        assetFileNames: (assetInfo) => {
+          const name = assetInfo.names?.[0] ?? assetInfo.name ?? ''
+          if (name.includes('disclose-version')) return 'tailwind[extname]'
+          return '[name][extname]'
+        },
       },
     },
   },

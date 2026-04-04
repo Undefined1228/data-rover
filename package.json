@@ -93,6 +93,56 @@
         "title": "연결 끊기",
         "category": "DataPilot",
         "icon": "$(debug-disconnect)"
+      },
+      {
+        "command": "datapilot.schema.createSchema",
+        "title": "스키마 생성",
+        "category": "DataPilot"
+      },
+      {
+        "command": "datapilot.schema.alterSchema",
+        "title": "스키마 수정",
+        "category": "DataPilot"
+      },
+      {
+        "command": "datapilot.schema.dropSchema",
+        "title": "스키마 삭제",
+        "category": "DataPilot"
+      },
+      {
+        "command": "datapilot.schema.openDataViewer",
+        "title": "데이터 뷰어 열기",
+        "category": "DataPilot"
+      },
+      {
+        "command": "datapilot.schema.viewDDL",
+        "title": "DDL 보기",
+        "category": "DataPilot"
+      },
+      {
+        "command": "datapilot.schema.copyDDL",
+        "title": "DDL 복사",
+        "category": "DataPilot"
+      },
+      {
+        "command": "datapilot.schema.alterTable",
+        "title": "테이블 수정",
+        "category": "DataPilot"
+      },
+      {
+        "command": "datapilot.schema.dropTable",
+        "title": "테이블 삭제",
+        "category": "DataPilot"
+      },
+      {
+        "command": "datapilot.schema.alterView",
+        "title": "뷰 수정",
+        "category": "DataPilot"
+      },
+      {
+        "command": "datapilot.schema.dropView",
+        "title": "뷰 삭제",
+        "category": "DataPilot"
       }
     ],
     "menus": {
@@ -135,9 +185,54 @@
           "group": "1_actions@2"
         },
         {
-          "command": "datapilot.openDataViewer",
-          "when": "view == datapilot.connections && viewItem =~ /^connection/",
-          "group": "2_open@1"
+          "command": "datapilot.schema.createSchema",
+          "when": "view == datapilot.schema && viewItem =~ /^schema-connection-pg/",
+          "group": "2_schema@0"
+        },
+        {
+          "command": "datapilot.schema.alterSchema",
+          "when": "view == datapilot.schema && viewItem == schema-pg",
+          "group": "1_actions@0"
+        },
+        {
+          "command": "datapilot.schema.dropSchema",
+          "when": "view == datapilot.schema && viewItem == schema-pg",
+          "group": "1_actions@1"
+        },
+        {
+          "command": "datapilot.schema.openDataViewer",
+          "when": "view == datapilot.schema && viewItem == schema-table",
+          "group": "1_open@0"
+        },
+        {
+          "command": "datapilot.schema.viewDDL",
+          "when": "view == datapilot.schema && viewItem =~ /^schema-(table|view|matview|function)/",
+          "group": "2_ddl@0"
+        },
+        {
+          "command": "datapilot.schema.copyDDL",
+          "when": "view == datapilot.schema && viewItem =~ /^schema-(table|view)/",
+          "group": "2_ddl@1"
+        },
+        {
+          "command": "datapilot.schema.alterTable",
+          "when": "view == datapilot.schema && viewItem == schema-table",
+          "group": "3_manage@0"
+        },
+        {
+          "command": "datapilot.schema.dropTable",
+          "when": "view == datapilot.schema && viewItem == schema-table",
+          "group": "3_manage@1"
+        },
+        {
+          "command": "datapilot.schema.alterView",
+          "when": "view == datapilot.schema && viewItem == schema-view",
+          "group": "3_manage@0"
+        },
+        {
+          "command": "datapilot.schema.dropView",
+          "when": "view == datapilot.schema && viewItem == schema-view",
+          "group": "3_manage@1"
         }
       ]
     }
