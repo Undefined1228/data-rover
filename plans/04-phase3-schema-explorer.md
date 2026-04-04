@@ -11,28 +11,28 @@
 ## 체크리스트
 
 ### 3-1. 드라이버 메서드 확인 및 이식
-- [ ] `getSchemas()` — PostgreSQL: `pg_namespace`, MySQL: `SHOW DATABASES` (table.ts 발췌)
-- [ ] `getSchemaObjects(schema)` — 테이블/뷰/함수/Materialized View 목록 (table.ts `getSchemaObjects` 이식)
-- [ ] `getTableNames(connectionId, schema)` — 테이블명 목록
-- [ ] `getColumnNames(connectionId, schema, table)` — 자동완성용
-- [ ] `getObjectDDL(connectionId, schema, objectName, type)` — DDL 조회 (table.ts 이식)
-- [ ] FK 조회, 인덱스 조회 로직 확인 (table.ts 내 포함 여부 확인)
+- [x] `getSchemas()` — PostgreSQL: `pg_namespace`, MySQL: `SHOW DATABASES` (table.ts 발췌)
+- [x] `getSchemaObjects(schema)` — 테이블/뷰/함수/Materialized View 목록 (table.ts `getSchemaObjects` 이식)
+- [x] `getTableNames(connectionId, schema)` — 테이블명 목록
+- [x] `getColumnNames(connectionId, schema, table)` — 자동완성용
+- [x] `getObjectDDL(connectionId, schema, objectName, type)` — DDL 조회 (table.ts 이식)
+- [x] FK 조회, 인덱스 조회 로직 확인 (table.ts 내 포함 여부 확인)
 
 ### 3-2. TreeItem 클래스 (`src/providers/schemaProvider.ts`)
-- [ ] `ConnectionTreeItem` (연결 노드)
-- [ ] `SchemaTreeItem` (스키마/데이터베이스 노드)
-- [ ] `CategoryTreeItem` (Tables / Views / Functions / Materialized Views)
-- [ ] `TableTreeItem`, `ViewTreeItem`, `FunctionTreeItem`, `MatViewTreeItem`
-- [ ] `ColumnGroupItem`, `FKGroupItem`, `IndexGroupItem`
-- [ ] `ColumnItem` (이름 + 타입, PK/nullable 뱃지)
-- [ ] `FKItem` (제약명 + `로컬컬럼 → 참조테이블(참조컬럼)`)
-- [ ] `IndexItem` (인덱스명, UNIQUE 뱃지, 컬럼 목록)
+- [x] `ConnectionTreeItem` (연결 노드)
+- [x] `SchemaTreeItem` (스키마/데이터베이스 노드)
+- [x] `CategoryTreeItem` (Tables / Views / Functions / Materialized Views)
+- [x] `TableTreeItem`, `ViewTreeItem`, `FunctionTreeItem`, `MatViewTreeItem`
+- [x] `ColumnGroupItem`, `FKGroupItem`, `IndexGroupItem`
+- [x] `ColumnItem` (이름 + 타입, PK/nullable 뱃지)
+- [x] `FKItem` (제약명 + `로컬컬럼 → 참조테이블(참조컬럼)`)
+- [x] `IndexItem` (인덱스명, UNIQUE 뱃지, 컬럼 목록)
 
 ### 3-3. SchemaProvider 구현
-- [ ] lazy loading — 노드 펼칠 때만 자식 fetch
-- [ ] 로딩 중 `$(loading~spin)` 아이콘
-- [ ] fetch 에러 시 인라인 에러 노드
-- [ ] `refresh(connectionId?)` — 전체 또는 특정 연결만 갱신
+- [x] lazy loading — 노드 펼칠 때만 자식 fetch
+- [x] 로딩 중 `$(loading~spin)` 아이콘
+- [x] fetch 에러 시 인라인 에러 노드
+- [x] `refresh(connectionId?)` — 전체 또는 특정 연결만 갱신
 
 ### 3-4. 컨텍스트 메뉴 (`package.json` menus)
 - [ ] 연결 노드: 새로고침, 연결 끊기, 수정, 삭제
