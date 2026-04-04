@@ -221,28 +221,26 @@ export class PostgresDriver implements IDriver {
   }
 
   async getSchemaObjects(schemaName: string): Promise<SchemaObjects> {
-    const [tableNames, viewNames, matViewNames, functions] = await Promise.all([
-      this.client.query(
-        `SELECT tablename AS name FROM pg_tables WHERE schemaname = $1 ORDER BY tablename`,
-        [schemaName]
-      ),
-      this.client.query(
-        `SELECT viewname AS name FROM pg_views WHERE schemaname = $1 ORDER BY viewname`,
-        [schemaName]
-      ),
-      this.client.query(
-        `SELECT matviewname AS name FROM pg_matviews WHERE schemaname = $1 ORDER BY matviewname`,
-        [schemaName]
-      ),
-      this.client.query(
-        `SELECT p.proname AS name
-         FROM pg_proc p
-         JOIN pg_namespace n ON p.pronamespace = n.oid
-         WHERE n.nspname = $1 AND p.prokind IN ('f', 'p')
-         ORDER BY p.proname`,
-        [schemaName]
-      )
-    ])
+    const tableNames = await this.client.query(
+      `SELECT tablename AS name FROM pg_tables WHERE schemaname = $1 ORDER BY tablename`,
+      [schemaName]
+    )
+    const viewNames = await this.client.query(
+      `SELECT viewname AS name FROM pg_views WHERE schemaname = $1 ORDER BY viewname`,
+      [schemaName]
+    )
+    const matViewNames = await this.client.query(
+      `SELECT matviewname AS name FROM pg_matviews WHERE schemaname = $1 ORDER BY matviewname`,
+      [schemaName]
+    )
+    const functions = await this.client.query(
+      `SELECT p.proname AS name
+       FROM pg_proc p
+       JOIN pg_namespace n ON p.pronamespace = n.oid
+       WHERE n.nspname = $1 AND p.prokind IN ('f', 'p')
+       ORDER BY p.proname`,
+      [schemaName]
+    )
 
     const allRelNames = [
       ...tableNames.rows.map((r) => r.name as string),
@@ -251,91 +249,89 @@ export class PostgresDriver implements IDriver {
     ]
     const tableRelNames = tableNames.rows.map((r) => r.name as string)
 
-    const [columnsResult, pkResult, indexesResult, sequencesResult, fkResult] = await Promise.all([
-      allRelNames.length > 0
-        ? this.client.query(
-            `SELECT c.table_name, c.column_name, c.data_type, c.udt_name,
-                    c.character_maximum_length, c.numeric_precision, c.numeric_scale,
-                    c.is_nullable, c.column_default
-             FROM information_schema.columns c
-             WHERE c.table_schema = $1 AND c.table_name = ANY($2)
-             ORDER BY c.table_name, c.ordinal_position`,
-            [schemaName, allRelNames]
-          )
-        : { rows: [] as Record<string, unknown>[] },
-      allRelNames.length > 0
-        ? this.client.query(
-            `SELECT kcu.table_name, kcu.column_name
-             FROM information_schema.table_constraints tc
-             JOIN information_schema.key_column_usage kcu
-               ON tc.constraint_name = kcu.constraint_name
-               AND tc.table_schema = kcu.table_schema
-             WHERE tc.constraint_type = 'PRIMARY KEY'
-               AND tc.table_schema = $1
-               AND tc.table_name = ANY($2)`,
-            [schemaName, allRelNames]
-          )
-        : { rows: [] as Record<string, unknown>[] },
-      this.client.query(
-        `SELECT
-           i.tablename,
-           i.indexname,
-           ix.indisunique AS is_unique,
-           (
-             SELECT array_agg(
-               CASE WHEN k.attnum > 0 THEN a.attname ELSE '<expr>' END
-               ORDER BY k.ord
-             )
-             FROM unnest(ix.indkey) WITH ORDINALITY AS k(attnum, ord)
-             LEFT JOIN pg_attribute a ON a.attrelid = ix.indrelid AND a.attnum = k.attnum
-           ) AS columns
-         FROM pg_indexes i
-         JOIN pg_class c ON c.relname = i.indexname AND c.relkind = 'i'
-         JOIN pg_namespace ns ON ns.nspname = i.schemaname AND ns.oid = c.relnamespace
-         JOIN pg_index ix ON ix.indexrelid = c.oid
-         WHERE i.schemaname = $1
-         ORDER BY i.tablename, i.indexname`,
-        [schemaName]
-      ),
-      this.client.query(
-        `SELECT s.sequencename,
-                d.refobjsubid,
-                c.relname AS table_name
-         FROM pg_sequences s
-         JOIN pg_class seq_class ON seq_class.relname = s.sequencename
-           AND seq_class.relnamespace = (SELECT oid FROM pg_namespace WHERE nspname = $1)
-         LEFT JOIN pg_depend d ON d.objid = seq_class.oid AND d.deptype = 'a'
-         LEFT JOIN pg_class c ON c.oid = d.refobjid
-         WHERE s.schemaname = $1
-         ORDER BY s.sequencename`,
-        [schemaName]
-      ),
-      tableRelNames.length > 0
-        ? this.client.query(
-            `SELECT tc.table_name, tc.constraint_name,
-                    rc.delete_rule, rc.update_rule,
-                    kcu.column_name AS local_column,
-                    ccu.table_schema AS ref_schema,
-                    ccu.table_name AS ref_table,
-                    ccu.column_name AS ref_column
-             FROM information_schema.table_constraints tc
-             JOIN information_schema.referential_constraints rc
-               ON tc.constraint_name = rc.constraint_name
-               AND tc.constraint_schema = rc.constraint_schema
-             JOIN information_schema.key_column_usage kcu
-               ON tc.constraint_name = kcu.constraint_name
-               AND tc.constraint_schema = kcu.constraint_schema
-             JOIN information_schema.constraint_column_usage ccu
-               ON rc.unique_constraint_name = ccu.constraint_name
-               AND rc.unique_constraint_schema = ccu.constraint_schema
-             WHERE tc.constraint_type = 'FOREIGN KEY'
-               AND tc.table_schema = $1
-               AND tc.table_name = ANY($2)
-             ORDER BY tc.table_name, tc.constraint_name, kcu.ordinal_position`,
-            [schemaName, tableRelNames]
-          )
-        : { rows: [] as Record<string, unknown>[] }
-    ])
+    const columnsResult = allRelNames.length > 0
+      ? await this.client.query(
+          `SELECT c.table_name, c.column_name, c.data_type, c.udt_name,
+                  c.character_maximum_length, c.numeric_precision, c.numeric_scale,
+                  c.is_nullable, c.column_default
+           FROM information_schema.columns c
+           WHERE c.table_schema = $1 AND c.table_name = ANY($2)
+           ORDER BY c.table_name, c.ordinal_position`,
+          [schemaName, allRelNames]
+        )
+      : { rows: [] as Record<string, unknown>[] }
+    const pkResult = allRelNames.length > 0
+      ? await this.client.query(
+          `SELECT kcu.table_name, kcu.column_name
+           FROM information_schema.table_constraints tc
+           JOIN information_schema.key_column_usage kcu
+             ON tc.constraint_name = kcu.constraint_name
+             AND tc.table_schema = kcu.table_schema
+           WHERE tc.constraint_type = 'PRIMARY KEY'
+             AND tc.table_schema = $1
+             AND tc.table_name = ANY($2)`,
+          [schemaName, allRelNames]
+        )
+      : { rows: [] as Record<string, unknown>[] }
+    const indexesResult = await this.client.query(
+      `SELECT
+         i.tablename,
+         i.indexname,
+         ix.indisunique AS is_unique,
+         (
+           SELECT array_agg(
+             CASE WHEN k.attnum > 0 THEN a.attname ELSE '<expr>' END
+             ORDER BY k.ord
+           )
+           FROM unnest(ix.indkey) WITH ORDINALITY AS k(attnum, ord)
+           LEFT JOIN pg_attribute a ON a.attrelid = ix.indrelid AND a.attnum = k.attnum
+         ) AS columns
+       FROM pg_indexes i
+       JOIN pg_class c ON c.relname = i.indexname AND c.relkind = 'i'
+       JOIN pg_namespace ns ON ns.nspname = i.schemaname AND ns.oid = c.relnamespace
+       JOIN pg_index ix ON ix.indexrelid = c.oid
+       WHERE i.schemaname = $1
+       ORDER BY i.tablename, i.indexname`,
+      [schemaName]
+    )
+    const sequencesResult = await this.client.query(
+      `SELECT s.sequencename,
+              d.refobjsubid,
+              c.relname AS table_name
+       FROM pg_sequences s
+       JOIN pg_class seq_class ON seq_class.relname = s.sequencename
+         AND seq_class.relnamespace = (SELECT oid FROM pg_namespace WHERE nspname = $1)
+       LEFT JOIN pg_depend d ON d.objid = seq_class.oid AND d.deptype = 'a'
+       LEFT JOIN pg_class c ON c.oid = d.refobjid
+       WHERE s.schemaname = $1
+       ORDER BY s.sequencename`,
+      [schemaName]
+    )
+    const fkResult = tableRelNames.length > 0
+      ? await this.client.query(
+          `SELECT tc.table_name, tc.constraint_name,
+                  rc.delete_rule, rc.update_rule,
+                  kcu.column_name AS local_column,
+                  ccu.table_schema AS ref_schema,
+                  ccu.table_name AS ref_table,
+                  ccu.column_name AS ref_column
+           FROM information_schema.table_constraints tc
+           JOIN information_schema.referential_constraints rc
+             ON tc.constraint_name = rc.constraint_name
+             AND tc.constraint_schema = rc.constraint_schema
+           JOIN information_schema.key_column_usage kcu
+             ON tc.constraint_name = kcu.constraint_name
+             AND tc.constraint_schema = kcu.constraint_schema
+           JOIN information_schema.constraint_column_usage ccu
+             ON rc.unique_constraint_name = ccu.constraint_name
+             AND rc.unique_constraint_schema = ccu.constraint_schema
+           WHERE tc.constraint_type = 'FOREIGN KEY'
+             AND tc.table_schema = $1
+             AND tc.table_name = ANY($2)
+           ORDER BY tc.table_name, tc.constraint_name, kcu.ordinal_position`,
+          [schemaName, tableRelNames]
+        )
+      : { rows: [] as Record<string, unknown>[] }
 
     const pkSet = new Set(pkResult.rows.map((r) => `${r.table_name}.${r.column_name}`))
 
@@ -459,27 +455,25 @@ export class PostgresDriver implements IDriver {
     const quoteIdent = (s: string): string => '"' + s.replace(/"/g, '""') + '"'
     const tableRef = `${quoteIdent(schemaName)}.${quoteIdent(tableName)}`
 
-    const [colResult, pkResult] = await Promise.all([
-      this.client.query(
-        `SELECT column_name, column_default, udt_name FROM information_schema.columns
-         WHERE table_schema = $1 AND table_name = $2
-         ORDER BY ordinal_position`,
-        [schemaName, tableName]
-      ),
-      this.client.query(
-        `SELECT a.attname
-         FROM pg_constraint c
-         JOIN pg_attribute a ON a.attrelid = c.conrelid AND a.attnum = ANY(c.conkey)
-         WHERE c.contype = 'p'
-           AND c.conrelid = (
-             SELECT c.oid FROM pg_class c
-             JOIN pg_namespace n ON n.oid = c.relnamespace
-             WHERE c.relname = $1 AND n.nspname = $2
-           )
-         ORDER BY a.attnum`,
-        [tableName, schemaName]
-      )
-    ])
+    const colResult = await this.client.query(
+      `SELECT column_name, column_default, udt_name FROM information_schema.columns
+       WHERE table_schema = $1 AND table_name = $2
+       ORDER BY ordinal_position`,
+      [schemaName, tableName]
+    )
+    const pkResult = await this.client.query(
+      `SELECT a.attname
+       FROM pg_constraint c
+       JOIN pg_attribute a ON a.attrelid = c.conrelid AND a.attnum = ANY(c.conkey)
+       WHERE c.contype = 'p'
+         AND c.conrelid = (
+           SELECT c.oid FROM pg_class c
+           JOIN pg_namespace n ON n.oid = c.relnamespace
+           WHERE c.relname = $1 AND n.nspname = $2
+         )
+       ORDER BY a.attnum`,
+      [tableName, schemaName]
+    )
 
     const columnNames = colResult.rows.map((r) => r.column_name as string)
     const columnDefaults: Record<string, string | null> = {}
@@ -616,23 +610,122 @@ export class PostgresDriver implements IDriver {
       return (result.rows[0]?.def as string ?? '').trim()
     }
 
-    const result = await this.client.query(
-      `SELECT
-         'CREATE TABLE ' || quote_ident($1) || '.' || quote_ident($2) || E' (\n' ||
-         string_agg(
-           '  ' || quote_ident(column_name) ||
-           ' ' || udt_name ||
-           CASE WHEN character_maximum_length IS NOT NULL THEN '(' || character_maximum_length || ')' ELSE '' END ||
-           CASE WHEN is_nullable = 'NO' THEN ' NOT NULL' ELSE '' END ||
-           CASE WHEN column_default IS NOT NULL THEN ' DEFAULT ' || column_default ELSE '' END,
-           E',\n' ORDER BY ordinal_position
-         ) || E'\n)' AS ddl
+    const q = (s: string) => `"${s.replace(/"/g, '""')}"`
+    const tableRef = `${q(schemaName)}.${q(objectName)}`
+
+    const fkRuleLabel: Record<string, string> = {
+      a: 'NO ACTION', r: 'RESTRICT', c: 'CASCADE', n: 'SET NULL', d: 'SET DEFAULT',
+    }
+
+    const colsResult = await this.client.query(
+      `SELECT column_name, udt_name, character_maximum_length, numeric_precision, numeric_scale, is_nullable, column_default
        FROM information_schema.columns
        WHERE table_schema = $1 AND table_name = $2
-       GROUP BY table_schema, table_name`,
+       ORDER BY ordinal_position`,
       [schemaName, objectName]
     )
-    return (result.rows[0]?.ddl as string ?? '').trim()
+    const pkUniqueResult = await this.client.query(
+      `SELECT c.conname AS constraint_name, c.contype AS constraint_type,
+              a.attname AS column_name, la.ord AS col_pos
+       FROM pg_constraint c
+       JOIN pg_class t ON t.oid = c.conrelid
+       JOIN pg_namespace n ON n.oid = t.relnamespace
+       JOIN LATERAL unnest(c.conkey) WITH ORDINALITY AS la(attnum, ord) ON true
+       JOIN pg_attribute a ON a.attrelid = c.conrelid AND a.attnum = la.attnum
+       WHERE c.contype IN ('p', 'u') AND n.nspname = $1 AND t.relname = $2
+       ORDER BY c.contype, c.conname, la.ord`,
+      [schemaName, objectName]
+    )
+    const fkResult = await this.client.query(
+      `SELECT c.conname AS constraint_name,
+              a.attname AS local_column, la.ord AS local_pos,
+              n2.nspname AS ref_schema, c2.relname AS ref_table,
+              a2.attname AS ref_column,
+              c.confdeltype AS delete_rule, c.confupdtype AS update_rule
+       FROM pg_constraint c
+       JOIN pg_class t ON t.oid = c.conrelid
+       JOIN pg_namespace n ON n.oid = t.relnamespace
+       JOIN pg_class c2 ON c2.oid = c.confrelid
+       JOIN pg_namespace n2 ON n2.oid = c2.relnamespace
+       JOIN LATERAL unnest(c.conkey) WITH ORDINALITY AS la(attnum, ord) ON true
+       JOIN pg_attribute a ON a.attrelid = c.conrelid AND a.attnum = la.attnum
+       JOIN LATERAL unnest(c.confkey) WITH ORDINALITY AS ra(attnum, ord) ON la.ord = ra.ord
+       JOIN pg_attribute a2 ON a2.attrelid = c.confrelid AND a2.attnum = ra.attnum
+       WHERE c.contype = 'f' AND n.nspname = $1 AND t.relname = $2
+       ORDER BY c.conname, la.ord`,
+      [schemaName, objectName]
+    )
+    const indexResult = await this.client.query(
+      `SELECT i.indexname, ix.indisunique,
+              (SELECT array_agg(
+                 CASE WHEN k.attnum > 0 THEN a.attname ELSE '<expr>' END
+                 ORDER BY k.ord
+               )
+               FROM unnest(ix.indkey) WITH ORDINALITY AS k(attnum, ord)
+               LEFT JOIN pg_attribute a ON a.attrelid = ix.indrelid AND a.attnum = k.attnum
+              ) AS columns
+       FROM pg_indexes i
+       JOIN pg_class c ON c.relname = i.indexname AND c.relkind = 'i'
+       JOIN pg_namespace ns ON ns.oid = c.relnamespace AND ns.nspname = i.schemaname
+       JOIN pg_index ix ON ix.indexrelid = c.oid
+       WHERE i.schemaname = $1 AND i.tablename = $2
+         AND NOT EXISTS (
+           SELECT 1 FROM information_schema.table_constraints tc
+           WHERE tc.table_schema = $1 AND tc.table_name = $2
+             AND tc.constraint_name = i.indexname
+         )
+       ORDER BY i.indexname`,
+      [schemaName, objectName]
+    )
+
+    const colDefs = colsResult.rows.map((r) => {
+      let def = `    ${q(r.column_name as string)} ${formatDataType(r)}`
+      if (r.is_nullable === 'NO') def += ' NOT NULL'
+      if (r.column_default !== null) def += ` DEFAULT ${r.column_default as string}`
+      return def
+    })
+
+    const pkUniqueMap = new Map<string, { type: string; columns: string[] }>()
+    for (const r of pkUniqueResult.rows) {
+      const name = r.constraint_name as string
+      if (!pkUniqueMap.has(name)) pkUniqueMap.set(name, { type: r.constraint_type as string, columns: [] })
+      pkUniqueMap.get(name)!.columns.push(r.column_name as string)
+    }
+    const pkUniqueDefs = Array.from(pkUniqueMap.entries()).map(([name, { type, columns }]) => {
+      const keyword = type === 'p' ? 'PRIMARY KEY' : 'UNIQUE'
+      return `    CONSTRAINT ${q(name)}\n        ${keyword} (${columns.map(q).join(', ')})`
+    })
+
+    const fkMap = new Map<string, { localCols: string[]; refSchema: string; refTable: string; refCols: string[]; onDelete: string; onUpdate: string }>()
+    for (const r of fkResult.rows) {
+      const name = r.constraint_name as string
+      if (!fkMap.has(name)) {
+        fkMap.set(name, {
+          localCols: [], refSchema: r.ref_schema as string, refTable: r.ref_table as string, refCols: [],
+          onDelete: fkRuleLabel[r.delete_rule as string] ?? 'NO ACTION',
+          onUpdate: fkRuleLabel[r.update_rule as string] ?? 'NO ACTION',
+        })
+      }
+      fkMap.get(name)!.localCols.push(r.local_column as string)
+      fkMap.get(name)!.refCols.push(r.ref_column as string)
+    }
+    const fkDefs = Array.from(fkMap.entries()).map(([name, fk]) => {
+      let def = `    CONSTRAINT ${q(name)}\n        FOREIGN KEY (${fk.localCols.map(q).join(', ')})\n        REFERENCES ${q(fk.refSchema)}.${q(fk.refTable)} (${fk.refCols.map(q).join(', ')})`
+      if (fk.onDelete !== 'NO ACTION') def += `\n        ON DELETE ${fk.onDelete}`
+      if (fk.onUpdate !== 'NO ACTION') def += `\n        ON UPDATE ${fk.onUpdate}`
+      return def
+    })
+
+    const allDefs = [...colDefs, ...pkUniqueDefs, ...fkDefs]
+    let ddl = `CREATE TABLE ${tableRef} (\n${allDefs.join(',\n')}\n);`
+
+    for (const r of indexResult.rows) {
+      const cols = toPgArray(r.columns).map(q).join(', ')
+      const unique = (r.indisunique as boolean) ? 'UNIQUE ' : ''
+      ddl += `\n\nCREATE ${unique}INDEX ${q(r.indexname as string)}\n    ON ${tableRef} (${cols});`
+    }
+
+    return ddl
   }
 
   async getSessions(): Promise<SessionRow[]> {
