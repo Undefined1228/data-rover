@@ -12,6 +12,7 @@
   import { oneDarkHighlightStyle } from '@codemirror/theme-one-dark'
   import { api } from '$shared/api'
   import QueryResultViewer from './QueryResultViewer.svelte'
+  import ExplainViewer from './ExplainViewer.svelte'
 
   let { dbType }: { dbType: string } = $props()
 
@@ -177,7 +178,7 @@
           }),
           EditorView.domEventHandlers({
             keydown(e) {
-              if ((e.metaKey || e.ctrlKey) && e.shiftKey && e.key === 'f') {
+              if (e.altKey && e.shiftKey && e.key === 'F') {
                 e.preventDefault()
                 formatQuery()
                 return true
@@ -497,7 +498,7 @@
       >
         <WrapText class="h-3 w-3" />
         포맷
-        <kbd class="ml-0.5 rounded bg-muted px-1 py-0.5 font-mono text-[10px] text-muted-foreground/70 border border-border/60">{modKey}⇧F</kbd>
+        <kbd class="ml-0.5 rounded bg-muted px-1 py-0.5 font-mono text-[10px] text-muted-foreground/70 border border-border/60">⇧Alt F</kbd>
       </button>
 
       <div class="mx-1 h-4 w-px bg-border"></div>
@@ -575,9 +576,7 @@
         {:else if explainError}
           <div class="p-4 text-sm text-destructive whitespace-pre-wrap">{explainError}</div>
         {:else if explainResult}
-          <div class="p-4 text-[12px] text-muted-foreground font-mono whitespace-pre overflow-auto">
-            {JSON.stringify(explainResult.plan, null, 2)}
-          </div>
+          <ExplainViewer plan={explainResult.plan as any} totalTime={explainResult.totalTime} />
         {:else}
           <div class="flex h-full items-center justify-center text-[13px] text-muted-foreground/60">
             EXPLAIN 버튼을 눌러 실행 계획을 확인하세요

@@ -1,7 +1,7 @@
 import * as vscode from 'vscode'
 import { format } from 'sql-formatter'
 import { ConnectionsProvider, ConnectionItem } from './providers/connectionsProvider'
-import { SchemaProvider, SchemaTreeItem, TableTreeItem, ViewTreeItem, MatViewTreeItem, FunctionTreeItem } from './providers/schemaProvider'
+import { SchemaProvider, ConnectionTreeItem, SchemaTreeItem, TableTreeItem, ViewTreeItem, MatViewTreeItem, FunctionTreeItem } from './providers/schemaProvider'
 import { DdlContentProvider } from './providers/ddlContentProvider'
 import { ConnectionManager } from './connection/connectionManager'
 import { ConnectionFormPanel } from './panels/connectionFormPanel'
@@ -122,6 +122,13 @@ export function activate(context: vscode.ExtensionContext) {
 
     vscode.commands.registerCommand('datapilot.openSessionMonitor', () => {
       SessionMonitorPanel.open(context.extensionUri)
+    }),
+
+    vscode.commands.registerCommand('datapilot.schema.openQueryEditor', (item?: ConnectionTreeItem) => {
+      if (!item) return
+      const conn = connectionManager.getById(item.connectionId)
+      if (!conn) return
+      QueryEditorPanel.open(context.extensionUri, item.connectionId, conn.name, connectionManager, context)
     }),
 
     vscode.commands.registerCommand('datapilot.refreshSchema', () => {
