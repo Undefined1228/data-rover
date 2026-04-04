@@ -1,0 +1,197 @@
+{
+  "name": "datapilot",
+  "displayName": "DataPilot",
+  "description": "Database management tool for VS Code",
+  "version": "0.0.1",
+  "engines": {
+    "vscode": "^1.85.0"
+  },
+  "categories": ["Other"],
+  "activationEvents": [],
+  "main": "./out/extension.js",
+  "contributes": {
+    "viewsContainers": {
+      "activitybar": [
+        {
+          "id": "datapilot",
+          "title": "DataPilot",
+          "icon": "media/datapilot.svg"
+        }
+      ]
+    },
+    "views": {
+      "datapilot": [
+        {
+          "id": "datapilot.connections",
+          "name": "Connections",
+          "initialSize": 3
+        },
+        {
+          "id": "datapilot.schema",
+          "name": "Schema Explorer",
+          "initialSize": 7
+        }
+      ]
+    },
+    "commands": [
+      {
+        "command": "datapilot.addConnection",
+        "title": "연결 추가",
+        "category": "DataPilot",
+        "icon": "$(add)"
+      },
+      {
+        "command": "datapilot.refreshConnections",
+        "title": "새로고침",
+        "category": "DataPilot",
+        "icon": "$(refresh)"
+      },
+      {
+        "command": "datapilot.deleteConnection",
+        "title": "연결 삭제",
+        "category": "DataPilot",
+        "icon": "$(trash)"
+      },
+      {
+        "command": "datapilot.editConnection",
+        "title": "연결 편집",
+        "category": "DataPilot",
+        "icon": "$(edit)"
+      },
+      {
+        "command": "datapilot.openQueryEditor",
+        "title": "쿼리 에디터 열기",
+        "category": "DataPilot",
+        "icon": "$(file-code)"
+      },
+      {
+        "command": "datapilot.openDataViewer",
+        "title": "데이터 뷰어 열기",
+        "category": "DataPilot",
+        "icon": "$(table)"
+      },
+      {
+        "command": "datapilot.openERD",
+        "title": "ER 다이어그램 열기",
+        "category": "DataPilot",
+        "icon": "$(type-hierarchy)"
+      },
+      {
+        "command": "datapilot.openSessionMonitor",
+        "title": "세션 모니터 열기",
+        "category": "DataPilot",
+        "icon": "$(pulse)"
+      },
+      {
+        "command": "datapilot.refreshSchema",
+        "title": "스키마 새로고침",
+        "category": "DataPilot",
+        "icon": "$(refresh)"
+      },
+      {
+        "command": "datapilot.disconnectConnection",
+        "title": "연결 끊기",
+        "category": "DataPilot",
+        "icon": "$(debug-disconnect)"
+      }
+    ],
+    "menus": {
+      "view/title": [
+        {
+          "command": "datapilot.addConnection",
+          "when": "view == datapilot.connections",
+          "group": "navigation@1"
+        },
+        {
+          "command": "datapilot.refreshConnections",
+          "when": "view == datapilot.connections",
+          "group": "navigation@2"
+        },
+        {
+          "command": "datapilot.refreshSchema",
+          "when": "view == datapilot.schema",
+          "group": "navigation@1"
+        }
+      ],
+      "view/item/context": [
+        {
+          "command": "datapilot.openQueryEditor",
+          "when": "view == datapilot.connections && viewItem =~ /^connection/",
+          "group": "inline@1"
+        },
+        {
+          "command": "datapilot.disconnectConnection",
+          "when": "view == datapilot.connections && viewItem == connection-active",
+          "group": "1_actions@0"
+        },
+        {
+          "command": "datapilot.editConnection",
+          "when": "view == datapilot.connections && viewItem =~ /^connection/",
+          "group": "1_actions@1"
+        },
+        {
+          "command": "datapilot.deleteConnection",
+          "when": "view == datapilot.connections && viewItem =~ /^connection/",
+          "group": "1_actions@2"
+        },
+        {
+          "command": "datapilot.openDataViewer",
+          "when": "view == datapilot.connections && viewItem =~ /^connection/",
+          "group": "2_open@1"
+        }
+      ]
+    }
+  },
+  "scripts": {
+    "vscode:prepublish": "npm run build",
+    "build": "npm run build:ext && npm run build:webview",
+    "build:ext": "node build.mjs",
+    "build:webview": "vite build --config webview/vite.config.mts",
+    "watch:ext": "node build.mjs --watch",
+    "watch:webview": "vite build --config webview/vite.config.mts --watch",
+    "compile": "tsc -p ./",
+    "watch": "tsc -watch -p ./",
+    "lint": "eslint src --ext ts",
+    "check": "svelte-check --tsconfig ./tsconfig.webview.json"
+  },
+  "devDependencies": {
+    "@internationalized/date": "^3.5.0",
+    "@lucide/svelte": "^1.0.0",
+    "@sveltejs/vite-plugin-svelte": "^5.0.0",
+    "@tailwindcss/vite": "^4.0.0",
+    "@types/node": "^20.x",
+    "@types/pg": "^8.x",
+    "@types/ssh2": "^1.x",
+    "@types/vscode": "^1.85.0",
+    "@typescript-eslint/eslint-plugin": "^6.x",
+    "@typescript-eslint/parser": "^6.x",
+    "bits-ui": "^1.0.0",
+    "clsx": "^2.x",
+    "esbuild": "^0.24.0",
+    "eslint": "^8.x",
+    "eslint-plugin-svelte": "^2.x",
+    "lucide-svelte": "^1.0.0",
+    "paneforge": "^1.0.0",
+    "svelte": "^5.0.0",
+    "svelte-check": "^4.0.0",
+    "tailwind-merge": "^2.x",
+    "tailwind-variants": "^0.3.0",
+    "tailwindcss": "^4.0.0",
+    "typescript": "^5.x",
+    "vite": "^6.0.0"
+  },
+  "dependencies": {
+    "@codemirror/commands": "^6.x",
+    "@codemirror/lang-sql": "^6.x",
+    "@codemirror/language": "^6.x",
+    "@codemirror/lint": "^6.x",
+    "@codemirror/state": "^6.x",
+    "@codemirror/theme-one-dark": "^6.x",
+    "@codemirror/view": "^6.x",
+    "@dagrejs/dagre": "^1.x",
+    "mysql2": "^3.x",
+    "pg": "^8.x",
+    "sql-formatter": "^15.x",
+    "ssh2": "^1.x"
+  }
+}

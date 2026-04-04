@@ -1,0 +1,17 @@
+.vscode/**
+.vscode-test/**
+src/**
+webview/**
+node_modules/**
+**/*.map
+!out/**
+out/**/*.map
+out/webview/**
+*.vsix
+build.mjs
+tsconfig*.json
+.eslintrc*
+plans/**
+work-logs/**
+CLAUDE.md
+tree.txt
