@@ -7,6 +7,11 @@ import type {
   SelectAllParams, DataChangesParams, ExplainResult, ExplainNode,
   SessionRow, LockRow, TableStatRow
 } from '../connection/types'
+import {
+  buildMysqlDDL, buildAlterTableMysqlDDL,
+  type CreateTableParams, type AlterTableParams, type CreateIndexParams
+} from './ddlBuilder'
+import { readMysqlTableDDL } from './mysqlDdlReader'
 
 function buildConfig(conn: ConnectionConfig, password: string): mysql.ConnectionOptions {
   if (conn.inputMode === 'url' && conn.url) {
@@ -245,6 +250,10 @@ export class MysqlDriver implements IDriver {
        ORDER BY schema_name`
     )
     return rows.map((r) => ({ name: r.name as string, owned: false }))
+  }
+
+  async getErdData(schemaName: string): Promise<TableInfo[]> {
+    return (await this.getSchemaObjects(schemaName)).tables
   }
 
   async getSchemaObjects(schemaName: string): Promise<SchemaObjects> {
@@ -551,8 +560,7 @@ export class MysqlDriver implements IDriver {
       return (rows[0]?.['Create View'] as string) ?? ''
     }
 
-    const [rows] = await conn.query<mysql.RowDataPacket[]>(`SHOW CREATE TABLE ${quotedRef}`)
-    return (rows[0]?.['Create Table'] as string) ?? ''
+    return readMysqlTableDDL(conn, schemaName, objectName)
   }
 
   async getSessions(): Promise<SessionRow[]> {
@@ -671,5 +679,88 @@ export class MysqlDriver implements IDriver {
       result[tbl].push(row.COLUMN_NAME as string)
     }
     return result
+  }
+
+  async getRoles(): Promise<string[]> {
+    throw new Error('MySQL에서는 지원되지 않습니다.')
+  }
+
+  async createSchema(schemaName: string, _owner?: string): Promise<void> {
+    const conn = this.getConn()
+    const q = (s: string) => '`' + s.replace(/`/g, '``') + '`'
+    await conn.query(`CREATE DATABASE ${q(schemaName)}`)
+  }
+
+  async getSchemaOwner(_schemaName: string): Promise<string> {
+    throw new Error('MySQL에서는 지원되지 않습니다.')
+  }
+
+  async alterSchema(schemaName: string, newName?: string, _newOwner?: string): Promise<void> {
+    if (newName && newName !== schemaName) {
+      throw new Error('MySQL에서는 스키마 이름 변경이 지원되지 않습니다.')
+    }
+  }
+
+  async dropSchema(schemaName: string, _cascade: boolean): Promise<void> {
+    const conn = this.getConn()
+    const q = (s: string) => '`' + s.replace(/`/g, '``') + '`'
+    await conn.query(`DROP DATABASE ${q(schemaName)}`)
+  }
+
+  async createTable(params: CreateTableParams): Promise<void> {
+    const conn = this.getConn()
+    const ddl = buildMysqlDDL(params)
+    await conn.query(ddl)
+  }
+
+  async alterTable(params: AlterTableParams): Promise<void> {
+    const conn = this.getConn()
+    const statements = buildAlterTableMysqlDDL(params)
+    if (statements.length === 0) return
+    await conn.beginTransaction()
+    try {
+      for (const sql of statements) {
+        await conn.query(sql)
+      }
+      await conn.commit()
+    } catch (err) {
+      await conn.rollback().catch(() => {})
+      throw err
+    }
+  }
+
+  async createView(schemaName: string, viewName: string, selectQuery: string): Promise<void> {
+    const conn = this.getConn()
+    const q = (s: string) => '`' + s.replace(/`/g, '``') + '`'
+    await conn.query(
+      `CREATE OR REPLACE VIEW ${q(schemaName)}.${q(viewName)} AS\n${selectQuery}`
+    )
+  }
+
+  async alterView(schemaName: string, viewName: string, newViewName?: string, newSelectQuery?: string): Promise<void> {
+    const conn = this.getConn()
+    const q = (s: string) => '`' + s.replace(/`/g, '``') + '`'
+    if (newSelectQuery !== undefined) {
+      await conn.query(
+        `CREATE OR REPLACE VIEW ${q(schemaName)}.${q(viewName)} AS\n${newSelectQuery}`
+      )
+    }
+    if (newViewName && newViewName !== viewName) {
+      await conn.query(`RENAME TABLE ${q(schemaName)}.${q(viewName)} TO ${q(schemaName)}.${q(newViewName)}`)
+    }
+  }
+
+  async dropView(schemaName: string, viewName: string, _cascade: boolean): Promise<void> {
+    const conn = this.getConn()
+    const q = (s: string) => '`' + s.replace(/`/g, '``') + '`'
+    await conn.query(`DROP VIEW ${q(schemaName)}.${q(viewName)}`)
+  }
+
+  async createIndex(_params: CreateIndexParams): Promise<void> {
+    throw new Error('MySQL 인덱스 생성은 아직 지원되지 않습니다.')
+  }
+
+  async dropIndex(_schemaName: string, _indexName: string): Promise<void> {
+    throw new Error('MySQL 인덱스 삭제는 아직 지원되지 않습니다.')
   }
 }

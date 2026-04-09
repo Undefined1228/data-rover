@@ -34,4 +34,8 @@ function on(type: string, handler: MessageHandler): () => void {
   return () => handlers.delete(type)
 }
 
-export const api = { request, on }
+function notify(type: string, payload?: unknown): void {
+  vscode.postMessage({ type, payload })
+}
+
+export const api = { request, on, notify }

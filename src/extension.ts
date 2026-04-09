@@ -1,7 +1,7 @@
 import * as vscode from 'vscode'
 import { format } from 'sql-formatter'
 import { ConnectionsProvider, ConnectionItem } from './providers/connectionsProvider'
-import { SchemaProvider, ConnectionTreeItem, SchemaTreeItem, TableTreeItem, ViewTreeItem, MatViewTreeItem, FunctionTreeItem } from './providers/schemaProvider'
+import { SchemaProvider, ConnectionTreeItem, SchemaTreeItem, CategoryTreeItem, TableTreeItem, ViewTreeItem, MatViewTreeItem, FunctionTreeItem } from './providers/schemaProvider'
 import { DdlContentProvider } from './providers/ddlContentProvider'
 import { ConnectionManager } from './connection/connectionManager'
 import { ConnectionFormPanel } from './panels/connectionFormPanel'
@@ -9,6 +9,7 @@ import { QueryEditorPanel } from './panels/queryEditorPanel'
 import { DataViewerPanel } from './panels/dataViewerPanel'
 import { SessionMonitorPanel } from './panels/sessionMonitorPanel'
 import { ErdPanel } from './panels/erdPanel'
+import { SchemaManagementPanel } from './panels/schemaManagementPanel'
 import { closeAllSshTunnels } from './tunnel/sshTunnel'
 
 type DdlTarget = {
@@ -37,7 +38,11 @@ export function activate(context: vscode.ExtensionContext) {
   const ddlContentProvider = new DdlContentProvider()
 
   vscode.window.registerTreeDataProvider('datapilot.connections', connectionsProvider)
-  vscode.window.registerTreeDataProvider('datapilot.schema', schemaProvider)
+  const schemaTreeView = vscode.window.createTreeView('datapilot.schema', {
+    treeDataProvider: schemaProvider,
+    canSelectMany: true,
+  })
+  context.subscriptions.push(schemaTreeView)
   context.subscriptions.push(
     vscode.workspace.registerTextDocumentContentProvider(DdlContentProvider.scheme, ddlContentProvider)
   )
@@ -116,12 +121,47 @@ export function activate(context: vscode.ExtensionContext) {
       DataViewerPanel.open(context.extensionUri, connectionId, conn.name, 'public', tableName, 'table', connectionManager)
     }),
 
-    vscode.commands.registerCommand('datapilot.openERD', (_item?: ConnectionItem) => {
-      ErdPanel.open(context.extensionUri)
+    vscode.commands.registerCommand('datapilot.openERD', async () => {
+      const connections = connectionManager.getAll()
+      if (connections.length === 0) {
+        vscode.window.showWarningMessage('연결을 먼저 추가해 주세요.')
+        return
+      }
+      const picked = await vscode.window.showQuickPick(
+        connections.map((c) => ({ label: c.name, id: c.id })),
+        { placeHolder: 'ERD를 열 연결을 선택하세요' }
+      )
+      if (!picked) return
+      const schemaName = await vscode.window.showInputBox({ prompt: '스키마명 입력', value: 'public' })
+      if (!schemaName) return
+      ErdPanel.open(context.extensionUri, picked.id, schemaName, picked.label, connectionManager)
     }),
 
-    vscode.commands.registerCommand('datapilot.openSessionMonitor', () => {
-      SessionMonitorPanel.open(context.extensionUri)
+    vscode.commands.registerCommand('datapilot.schema.openERD', (item?: SchemaTreeItem) => {
+      if (!item) return
+      const conn = connectionManager.getById(item.connectionId)
+      if (!conn) return
+      ErdPanel.open(context.extensionUri, item.connectionId, item.schemaName, conn.name, connectionManager)
+    }),
+
+    vscode.commands.registerCommand('datapilot.openSessionMonitor', async (item?: ConnectionItem | ConnectionTreeItem) => {
+      let connectionId: string | undefined = item instanceof ConnectionTreeItem ? item.connectionId : item?.id
+      if (!connectionId) {
+        const connections = connectionManager.getAll()
+        if (connections.length === 0) {
+          vscode.window.showWarningMessage('연결을 먼저 추가해 주세요.')
+          return
+        }
+        const picked = await vscode.window.showQuickPick(
+          connections.map((c) => ({ label: c.name, id: c.id })),
+          { placeHolder: '세션을 모니터링할 연결을 선택하세요' }
+        )
+        if (!picked) return
+        connectionId = picked.id
+      }
+      const conn = connectionManager.getById(connectionId)
+      if (!conn) return
+      SessionMonitorPanel.open(context.extensionUri, connectionId, conn.name, connectionManager)
     }),
 
     vscode.commands.registerCommand('datapilot.schema.openQueryEditor', (item?: ConnectionTreeItem) => {
@@ -135,17 +175,31 @@ export function activate(context: vscode.ExtensionContext) {
       schemaProvider.refresh()
     }),
 
-    // ── 스키마 노드 (Phase 6에서 구현) ─────────────────────────────────────
-    vscode.commands.registerCommand('datapilot.schema.createSchema', (_item?: SchemaTreeItem) => {
-      vscode.window.showInformationMessage('스키마 생성은 Phase 6에서 구현됩니다.')
+    // ── 스키마 노드 ──────────────────────────────────────────────────────────
+    vscode.commands.registerCommand('datapilot.schema.createSchema', (item?: ConnectionTreeItem) => {
+      if (!item) return
+      SchemaManagementPanel.open(context.extensionUri, item.connectionId, connectionManager, 'createSchema', {})
     }),
 
-    vscode.commands.registerCommand('datapilot.schema.alterSchema', (_item?: SchemaTreeItem) => {
-      vscode.window.showInformationMessage('스키마 수정은 Phase 6에서 구현됩니다.')
+    vscode.commands.registerCommand('datapilot.schema.alterSchema', async (item?: SchemaTreeItem) => {
+      if (!item) return
+      try {
+        const driver = await connectionManager.connect(item.connectionId)
+        const currentOwner = await driver.getSchemaOwner(item.schemaName)
+        SchemaManagementPanel.open(context.extensionUri, item.connectionId, connectionManager, 'alterSchema', {
+          schemaName: item.schemaName,
+          currentOwner,
+        })
+      } catch (err) {
+        vscode.window.showErrorMessage(`스키마 정보 조회 실패: ${err instanceof Error ? err.message : String(err)}`)
+      }
     }),
 
-    vscode.commands.registerCommand('datapilot.schema.dropSchema', (_item?: SchemaTreeItem) => {
-      vscode.window.showInformationMessage('스키마 삭제는 Phase 6에서 구현됩니다.')
+    vscode.commands.registerCommand('datapilot.schema.dropSchema', (item?: SchemaTreeItem) => {
+      if (!item) return
+      SchemaManagementPanel.open(context.extensionUri, item.connectionId, connectionManager, 'dropSchema', {
+        schemaName: item.schemaName,
+      })
     }),
 
     // ── 테이블/뷰 노드 ──────────────────────────────────────────────────────
@@ -183,37 +237,93 @@ export function activate(context: vscode.ExtensionContext) {
       }
     }),
 
-    vscode.commands.registerCommand('datapilot.schema.copyDDL', async (item?: TableTreeItem | ViewTreeItem) => {
-      const target = toDdlTarget(item)
-      if (!target) return
+    vscode.commands.registerCommand('datapilot.schema.copyDDL', async (item?: TableTreeItem | ViewTreeItem, allSelected?: (TableTreeItem | ViewTreeItem)[]) => {
+      const targets = (allSelected?.length ? allSelected : item ? [item] : [])
+        .map(toDdlTarget)
+        .filter((t): t is DdlTarget => t !== undefined)
+      if (!targets.length) return
       try {
-        const driver = await connectionManager.connect(target.connectionId)
-        const raw = await driver.getObjectDDL(target.schemaName, target.objectName, target.objectType)
-        const ddl = target.objectType === 'table'
-          ? raw
-          : format(raw, { language: connectionManager.getById(target.connectionId)?.dbType === 'postgresql' ? 'postgresql' : 'mysql' })
-        await vscode.env.clipboard.writeText(ddl)
-        vscode.window.showInformationMessage('DDL이 클립보드에 복사되었습니다.')
+        const driver = await connectionManager.connect(targets[0].connectionId)
+        const ddls = await Promise.all(targets.map(async (target) => {
+          const raw = await driver.getObjectDDL(target.schemaName, target.objectName, target.objectType)
+          return target.objectType === 'table'
+            ? raw
+            : format(raw, { language: connectionManager.getById(target.connectionId)?.dbType === 'postgresql' ? 'postgresql' : 'mysql' })
+        }))
+        await vscode.env.clipboard.writeText(ddls.join('\n\n'))
+        vscode.window.showInformationMessage(`DDL ${ddls.length}개가 클립보드에 복사되었습니다.`)
       } catch (err) {
         vscode.window.showErrorMessage(`DDL 조회 실패: ${err instanceof Error ? err.message : String(err)}`)
       }
     }),
 
-    vscode.commands.registerCommand('datapilot.schema.alterTable', (_item?: TableTreeItem) => {
-      vscode.window.showInformationMessage('테이블 수정은 Phase 6에서 구현됩니다.')
+    vscode.commands.registerCommand('datapilot.schema.createTable', (item?: CategoryTreeItem | SchemaTreeItem) => {
+      if (!item) return
+      const conn = connectionManager.getById(item.connectionId)
+      if (!conn) return
+      SchemaManagementPanel.open(context.extensionUri, item.connectionId, connectionManager, 'createTable', {
+        schemaName: item.schemaName,
+        dbType: conn.dbType,
+      })
+    }),
+
+    vscode.commands.registerCommand('datapilot.schema.alterTable', (item?: TableTreeItem) => {
+      if (!item) return
+      const conn = connectionManager.getById(item.connectionId)
+      if (!conn) return
+      SchemaManagementPanel.open(context.extensionUri, item.connectionId, connectionManager, 'alterTable', {
+        schemaName: item.schemaName,
+        tableInfo: item.tableInfo,
+        dbType: conn.dbType,
+      })
     }),
 
     vscode.commands.registerCommand('datapilot.schema.dropTable', (_item?: TableTreeItem) => {
       vscode.window.showInformationMessage('테이블 삭제는 Phase 6에서 구현됩니다.')
     }),
 
-    vscode.commands.registerCommand('datapilot.schema.alterView', (_item?: ViewTreeItem) => {
-      vscode.window.showInformationMessage('뷰 수정은 Phase 6에서 구현됩니다.')
+    vscode.commands.registerCommand('datapilot.schema.createView', (item?: SchemaTreeItem) => {
+      if (!item) return
+      SchemaManagementPanel.open(context.extensionUri, item.connectionId, connectionManager, 'createView', {
+        schemaName: item.schemaName,
+      })
     }),
 
-    vscode.commands.registerCommand('datapilot.schema.dropView', (_item?: ViewTreeItem) => {
-      vscode.window.showInformationMessage('뷰 삭제는 Phase 6에서 구현됩니다.')
-    })
+    vscode.commands.registerCommand('datapilot.schema.alterView', (item?: ViewTreeItem) => {
+      if (!item) return
+      SchemaManagementPanel.open(context.extensionUri, item.connectionId, connectionManager, 'alterView', {
+        schemaName: item.schemaName,
+        editViewName: item.viewInfo.name,
+      })
+    }),
+
+    vscode.commands.registerCommand('datapilot.schema.dropView', (item?: ViewTreeItem) => {
+      if (!item) return
+      SchemaManagementPanel.open(context.extensionUri, item.connectionId, connectionManager, 'dropView', {
+        schemaName: item.schemaName,
+        viewName: item.viewInfo.name,
+      })
+    }),
+
+    vscode.commands.registerCommand(
+      'datapilot.schema.showDDL',
+      (item?: TableTreeItem | ViewTreeItem, allSelected?: (TableTreeItem | ViewTreeItem)[]) => {
+        const targets = (allSelected?.length ? allSelected : item ? [item] : []).filter(
+          (i): i is TableTreeItem | ViewTreeItem =>
+            i instanceof TableTreeItem || i instanceof ViewTreeItem
+        )
+        if (!targets.length) return
+        const connectionId = targets[0].connectionId
+        const conn = connectionManager.getById(connectionId)
+        if (!conn) return
+        const ddlObjects = targets.map((t) =>
+          t instanceof TableTreeItem
+            ? { schema: t.schemaName, name: t.tableInfo.name, type: 'table' as const }
+            : { schema: t.schemaName, name: t.viewInfo.name, type: 'view' as const }
+        )
+        SchemaManagementPanel.open(context.extensionUri, connectionId, connectionManager, 'showDDL', {}, ddlObjects)
+      }
+    )
   )
 }
 

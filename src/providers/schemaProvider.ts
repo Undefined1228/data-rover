@@ -1,6 +1,6 @@
 import * as vscode from 'vscode'
 import type { ConnectionManager } from '../connection/connectionManager'
-import type { SchemaInfo, SchemaObjects, ColumnInfo, FKInfo, IndexInfo, TableInfo, ViewInfo, MatViewInfo } from '../connection/types'
+import type { SchemaInfo, SchemaObjects, TableInfo, ViewInfo, MatViewInfo } from '../connection/types'
 
 // ── TreeItem 클래스 ───────────────────────────────────────────────────────
 
@@ -71,9 +71,10 @@ export class TableTreeItem extends vscode.TreeItem {
     public readonly schemaName: string,
     public readonly tableInfo: TableInfo
   ) {
-    super(tableInfo.name, vscode.TreeItemCollapsibleState.Collapsed)
+    super(tableInfo.name, vscode.TreeItemCollapsibleState.None)
     this.contextValue = 'schema-table'
     this.iconPath = new vscode.ThemeIcon('symbol-class')
+    this.description = tableInfo.columns.length > 0 ? `${tableInfo.columns.length}열` : undefined
   }
 }
 
@@ -84,7 +85,7 @@ export class ViewTreeItem extends vscode.TreeItem {
     public readonly schemaName: string,
     public readonly viewInfo: ViewInfo
   ) {
-    super(viewInfo.name, vscode.TreeItemCollapsibleState.Collapsed)
+    super(viewInfo.name, vscode.TreeItemCollapsibleState.None)
     this.contextValue = 'schema-view'
     this.iconPath = new vscode.ThemeIcon('symbol-interface')
   }
@@ -97,7 +98,7 @@ export class MatViewTreeItem extends vscode.TreeItem {
     public readonly schemaName: string,
     public readonly matViewInfo: MatViewInfo
   ) {
-    super(matViewInfo.name, vscode.TreeItemCollapsibleState.Collapsed)
+    super(matViewInfo.name, vscode.TreeItemCollapsibleState.None)
     this.contextValue = 'schema-matview'
     this.iconPath = new vscode.ThemeIcon('symbol-module')
   }
@@ -116,98 +117,6 @@ export class FunctionTreeItem extends vscode.TreeItem {
   }
 }
 
-export class ColumnGroupItem extends vscode.TreeItem {
-  readonly nodeType = 'column-group' as const
-  constructor(
-    public readonly connectionId: string,
-    public readonly schemaName: string,
-    public readonly tableName: string,
-    public readonly columns: ColumnInfo[]
-  ) {
-    super('Columns', vscode.TreeItemCollapsibleState.Expanded)
-    this.description = String(columns.length)
-    this.contextValue = 'schema-column-group'
-    this.iconPath = new vscode.ThemeIcon('symbol-field')
-  }
-}
-
-export class FKGroupItem extends vscode.TreeItem {
-  readonly nodeType = 'fk-group' as const
-  constructor(
-    public readonly connectionId: string,
-    public readonly schemaName: string,
-    public readonly tableName: string,
-    public readonly fks: FKInfo[]
-  ) {
-    super('Foreign Keys', vscode.TreeItemCollapsibleState.Collapsed)
-    this.description = String(fks.length)
-    this.contextValue = 'schema-fk-group'
-    this.iconPath = new vscode.ThemeIcon('references')
-  }
-}
-
-export class IndexGroupItem extends vscode.TreeItem {
-  readonly nodeType = 'index-group' as const
-  constructor(
-    public readonly connectionId: string,
-    public readonly schemaName: string,
-    public readonly tableName: string,
-    public readonly indexes: IndexInfo[]
-  ) {
-    super('Indexes', vscode.TreeItemCollapsibleState.Collapsed)
-    this.description = String(indexes.length)
-    this.contextValue = 'schema-index-group'
-    this.iconPath = new vscode.ThemeIcon('list-ordered')
-  }
-}
-
-export class ColumnItem extends vscode.TreeItem {
-  readonly nodeType = 'column' as const
-  constructor(public readonly column: ColumnInfo) {
-    super(column.name, vscode.TreeItemCollapsibleState.None)
-    this.contextValue = 'schema-column'
-    const badges: string[] = []
-    if (column.isPrimaryKey) badges.push('PK')
-    if (!column.nullable) badges.push('NOT NULL')
-    this.description = [column.dataType, ...badges].join(' · ')
-    this.iconPath = new vscode.ThemeIcon(column.isPrimaryKey ? 'key' : 'symbol-field')
-    this.tooltip = [
-      `${column.name}: ${column.dataType}`,
-      column.isPrimaryKey ? 'Primary Key' : '',
-      column.nullable ? 'Nullable' : 'NOT NULL',
-      column.defaultValue ? `Default: ${column.defaultValue}` : '',
-    ]
-      .filter(Boolean)
-      .join('\n')
-  }
-}
-
-export class FKItem extends vscode.TreeItem {
-  readonly nodeType = 'fk' as const
-  constructor(public readonly fk: FKInfo) {
-    super(fk.constraintName, vscode.TreeItemCollapsibleState.Collapsed)
-    this.contextValue = 'schema-fk'
-    this.iconPath = new vscode.ThemeIcon('references')
-  }
-}
-
-export class IndexItem extends vscode.TreeItem {
-  readonly nodeType = 'index' as const
-  constructor(public readonly index: IndexInfo) {
-    super(index.name, vscode.TreeItemCollapsibleState.Collapsed)
-    this.contextValue = 'schema-index'
-    this.iconPath = new vscode.ThemeIcon('list-ordered')
-    this.description = index.unique ? 'UNIQUE' : undefined
-  }
-}
-
-class DetailItem extends vscode.TreeItem {
-  readonly nodeType = 'detail' as const
-  constructor(text: string) {
-    super(text, vscode.TreeItemCollapsibleState.None)
-    this.contextValue = 'schema-detail'
-  }
-}
 
 class LoadingItem extends vscode.TreeItem {
   readonly nodeType = 'loading' as const
@@ -238,13 +147,6 @@ type SchemaNode =
   | ViewTreeItem
   | MatViewTreeItem
   | FunctionTreeItem
-  | ColumnGroupItem
-  | FKGroupItem
-  | IndexGroupItem
-  | ColumnItem
-  | FKItem
-  | IndexItem
-  | DetailItem
   | LoadingItem
   | ErrorItem
 
@@ -285,34 +187,6 @@ export class SchemaProvider implements vscode.TreeDataProvider<SchemaNode> {
     if (element.nodeType === 'connection') return this.fetchSchemas(element)
     if (element.nodeType === 'schema') return this.fetchObjects(element)
     if (element.nodeType === 'category') return this.getObjectNodes(element)
-    if (element.nodeType === 'table') return this.getTableChildNodes(element)
-    if (element.nodeType === 'view') {
-      return [new ColumnGroupItem(element.connectionId, element.schemaName, element.viewInfo.name, element.viewInfo.columns)]
-    }
-    if (element.nodeType === 'matview') {
-      const children: SchemaNode[] = [
-        new ColumnGroupItem(element.connectionId, element.schemaName, element.matViewInfo.name, element.matViewInfo.columns),
-      ]
-      if (element.matViewInfo.indexes.length > 0) {
-        children.push(new IndexGroupItem(element.connectionId, element.schemaName, element.matViewInfo.name, element.matViewInfo.indexes))
-      }
-      return children
-    }
-    if (element.nodeType === 'column-group') return element.columns.map((c) => new ColumnItem(c))
-    if (element.nodeType === 'fk-group') return element.fks.map((f) => new FKItem(f))
-    if (element.nodeType === 'index-group') return element.indexes.map((i) => new IndexItem(i))
-    if (element.nodeType === 'fk') {
-      const { fk } = element
-      const items: DetailItem[] = [
-        new DetailItem(`${fk.localColumns.join(', ')} → ${fk.refSchema}.${fk.refTable}(${fk.refColumns.join(', ')})`),
-      ]
-      if (fk.onDelete !== 'NO ACTION') items.push(new DetailItem(`ON DELETE ${fk.onDelete}`))
-      if (fk.onUpdate !== 'NO ACTION') items.push(new DetailItem(`ON UPDATE ${fk.onUpdate}`))
-      return items
-    }
-    if (element.nodeType === 'index') {
-      return [new DetailItem(element.index.columns.join(', '))]
-    }
     return []
   }
 
@@ -400,15 +274,4 @@ export class SchemaProvider implements vscode.TreeDataProvider<SchemaNode> {
     return []
   }
 
-  private getTableChildNodes(node: TableTreeItem): SchemaNode[] {
-    const { connectionId, schemaName, tableInfo } = node
-    const children: SchemaNode[] = [
-      new ColumnGroupItem(connectionId, schemaName, tableInfo.name, tableInfo.columns),
-    ]
-    if (tableInfo.foreignKeys.length > 0)
-      children.push(new FKGroupItem(connectionId, schemaName, tableInfo.name, tableInfo.foreignKeys))
-    if (tableInfo.indexes.length > 0)
-      children.push(new IndexGroupItem(connectionId, schemaName, tableInfo.name, tableInfo.indexes))
-    return children
-  }
 }

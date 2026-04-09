@@ -157,7 +157,7 @@ export class QueryEditorPanel extends PanelBase {
       const driver = await this.connectionManager.connect(this.connectionId)
       const schema = await driver.getCompletionSchema(payload?.schemaName)
       this.post('db:completion-schema:response', schema)
-    } catch (err) {
+    } catch {
       this.post('db:completion-schema:response', {})
     }
   }

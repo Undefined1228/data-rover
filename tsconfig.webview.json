@@ -6,7 +6,10 @@
     "lib": ["ESNext", "DOM"],
     "strict": true,
     "skipLibCheck": true,
-    "verbatimModuleSyntax": true
+    "verbatimModuleSyntax": true,
+    "paths": {
+      "$shared/*": ["./webview/shared/*"]
+    }
   },
   "include": ["webview/**/*.ts", "webview/**/*.svelte"]
 }

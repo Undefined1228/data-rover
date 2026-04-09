@@ -1,5 +1,5 @@
 import * as vscode from 'vscode'
-import * as path from 'path'
+import { existsSync } from 'fs'
 
 export abstract class PanelBase {
   protected panel: vscode.WebviewPanel
@@ -44,7 +44,7 @@ export abstract class PanelBase {
     const nonce = getNonce()
     const csp = `default-src 'none'; style-src ${webview.cspSource} 'unsafe-inline'; script-src 'nonce-${nonce}' ${webview.cspSource};`
 
-    const entryStyleExists = require('fs').existsSync(
+    const entryStyleExists = existsSync(
       vscode.Uri.joinPath(outWebviewUri, `${this.webviewEntry}.css`).fsPath
     )
 

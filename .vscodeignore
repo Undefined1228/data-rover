@@ -3,10 +3,8 @@
 src/**
 webview/**
 node_modules/**
-**/*.map
 !out/**
-out/**/*.map
-out/webview/**
+**/*.map
 *.vsix
 build.mjs
 tsconfig*.json

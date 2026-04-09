@@ -9,7 +9,7 @@ const ctx = await esbuild.context({
   external: ['vscode', 'pg', 'mysql2', 'ssh2'],
   format: 'cjs',
   platform: 'node',
-  sourcemap: true,
+  sourcemap: watch,
   minify: false,
 })
 

@@ -6,7 +6,9 @@
   "engines": {
     "vscode": "^1.85.0"
   },
-  "categories": ["Other"],
+  "categories": [
+    "Other"
+  ],
   "activationEvents": [],
   "main": "./out/extension.js",
   "contributes": {
@@ -131,6 +133,11 @@
         "category": "DataPilot"
       },
       {
+        "command": "datapilot.schema.createTable",
+        "title": "테이블 생성",
+        "category": "DataPilot"
+      },
+      {
         "command": "datapilot.schema.alterTable",
         "title": "테이블 수정",
         "category": "DataPilot"
@@ -138,6 +145,11 @@
       {
         "command": "datapilot.schema.dropTable",
         "title": "테이블 삭제",
+        "category": "DataPilot"
+      },
+      {
+        "command": "datapilot.schema.createView",
+        "title": "뷰 생성",
         "category": "DataPilot"
       },
       {
@@ -149,6 +161,17 @@
         "command": "datapilot.schema.dropView",
         "title": "뷰 삭제",
         "category": "DataPilot"
+      },
+      {
+        "command": "datapilot.schema.showDDL",
+        "title": "DDL 패널 보기",
+        "category": "DataPilot"
+      },
+      {
+        "command": "datapilot.schema.openERD",
+        "title": "ER 다이어그램 열기",
+        "category": "DataPilot",
+        "icon": "$(type-hierarchy)"
       }
     ],
     "menus": {
@@ -181,9 +204,14 @@
           "group": "inline@1"
         },
         {
+          "command": "datapilot.openSessionMonitor",
+          "when": "view == datapilot.connections && viewItem =~ /^connection/",
+          "group": "1_actions@0"
+        },
+        {
           "command": "datapilot.disconnectConnection",
           "when": "view == datapilot.connections && viewItem == connection-active",
-          "group": "1_actions@0"
+          "group": "1_actions@1"
         },
         {
           "command": "datapilot.editConnection",
@@ -206,6 +234,11 @@
           "group": "1_open@0"
         },
         {
+          "command": "datapilot.openSessionMonitor",
+          "when": "view == datapilot.schema && viewItem =~ /^schema-connection/",
+          "group": "1_open@1"
+        },
+        {
           "command": "datapilot.schema.createSchema",
           "when": "view == datapilot.schema && viewItem =~ /^schema-connection-pg/",
           "group": "2_schema@0"
@@ -219,6 +252,21 @@
           "command": "datapilot.schema.dropSchema",
           "when": "view == datapilot.schema && viewItem == schema-pg",
           "group": "1_actions@1"
+        },
+        {
+          "command": "datapilot.schema.openERD",
+          "when": "view == datapilot.schema && viewItem =~ /^schema-(pg|mysql)/",
+          "group": "1_open@0"
+        },
+        {
+          "command": "datapilot.schema.createTable",
+          "when": "view == datapilot.schema && viewItem =~ /^schema-(pg|mysql)/",
+          "group": "2_objects@0"
+        },
+        {
+          "command": "datapilot.schema.createView",
+          "when": "view == datapilot.schema && viewItem =~ /^schema-(pg|mysql)/",
+          "group": "2_objects@1"
         },
         {
           "command": "datapilot.schema.openDataViewer",
@@ -236,9 +284,19 @@
           "group": "2_ddl@1"
         },
         {
+          "command": "datapilot.schema.showDDL",
+          "when": "view == datapilot.schema && viewItem =~ /^schema-(table|view)/",
+          "group": "2_ddl@2"
+        },
+        {
+          "command": "datapilot.schema.createTable",
+          "when": "view == datapilot.schema && viewItem == schema-category-tables",
+          "group": "3_manage@0"
+        },
+        {
           "command": "datapilot.schema.alterTable",
           "when": "view == datapilot.schema && viewItem == schema-table",
-          "group": "3_manage@0"
+          "group": "3_manage@1"
         },
         {
           "command": "datapilot.schema.dropTable",
@@ -279,11 +337,11 @@
     "@types/pg": "^8.x",
     "@types/ssh2": "^1.x",
     "@types/vscode": "^1.85.0",
-    "@typescript-eslint/eslint-plugin": "^6.x",
-    "@typescript-eslint/parser": "^6.x",
+    "@typescript-eslint/eslint-plugin": "^8.58.1",
+    "@typescript-eslint/parser": "^8.58.1",
     "bits-ui": "^1.0.0",
     "clsx": "^2.x",
-    "esbuild": "^0.24.0",
+    "esbuild": "^0.28.0",
     "eslint": "^8.x",
     "eslint-plugin-svelte": "^2.x",
     "lucide-svelte": "^1.0.0",

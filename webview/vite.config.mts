@@ -15,6 +15,7 @@ export default defineConfig({
         dataViewer: resolve(__dirname, 'dataViewer/main.ts'),
         sessionMonitor: resolve(__dirname, 'sessionMonitor/main.ts'),
         erd: resolve(__dirname, 'erd/main.ts'),
+        schemaManagement: resolve(__dirname, 'schemaManagement/main.ts'),
       },
       output: {
         entryFileNames: '[name].js',
