@@ -1,6 +1,6 @@
 {
-  "name": "datapilot",
-  "displayName": "DataPilot",
+  "name": "data-rover",
+  "displayName": "DataRover",
   "description": "Database management tool for VS Code",
   "version": "0.0.1",
   "engines": {
@@ -15,21 +15,21 @@
     "viewsContainers": {
       "activitybar": [
         {
-          "id": "datapilot",
-          "title": "DataPilot",
-          "icon": "media/datapilot.svg"
+          "id": "data-rover",
+          "title": "DataRover",
+          "icon": "media/data-rover.svg"
         }
       ]
     },
     "views": {
-      "datapilot": [
+      "data-rover": [
         {
-          "id": "datapilot.connections",
+          "id": "data-rover.connections",
           "name": "Connections",
           "initialSize": 3
         },
         {
-          "id": "datapilot.schema",
+          "id": "data-rover.schema",
           "name": "Schema Explorer",
           "initialSize": 7
         }
@@ -37,280 +37,280 @@
     },
     "commands": [
       {
-        "command": "datapilot.addConnection",
+        "command": "data-rover.addConnection",
         "title": "연결 추가",
-        "category": "DataPilot",
+        "category": "DataRover",
         "icon": "$(add)"
       },
       {
-        "command": "datapilot.refreshConnections",
+        "command": "data-rover.refreshConnections",
         "title": "새로고침",
-        "category": "DataPilot",
+        "category": "DataRover",
         "icon": "$(refresh)"
       },
       {
-        "command": "datapilot.deleteConnection",
+        "command": "data-rover.deleteConnection",
         "title": "연결 삭제",
-        "category": "DataPilot",
+        "category": "DataRover",
         "icon": "$(trash)"
       },
       {
-        "command": "datapilot.editConnection",
+        "command": "data-rover.editConnection",
         "title": "연결 편집",
-        "category": "DataPilot",
+        "category": "DataRover",
         "icon": "$(edit)"
       },
       {
-        "command": "datapilot.openQueryEditor",
+        "command": "data-rover.openQueryEditor",
         "title": "쿼리 에디터 열기",
-        "category": "DataPilot",
+        "category": "DataRover",
         "icon": "$(file-code)"
       },
       {
-        "command": "datapilot.openDataViewer",
+        "command": "data-rover.openDataViewer",
         "title": "데이터 뷰어 열기",
-        "category": "DataPilot",
+        "category": "DataRover",
         "icon": "$(table)"
       },
       {
-        "command": "datapilot.openERD",
+        "command": "data-rover.openERD",
         "title": "ER 다이어그램 열기",
-        "category": "DataPilot",
+        "category": "DataRover",
         "icon": "$(type-hierarchy)"
       },
       {
-        "command": "datapilot.openSessionMonitor",
+        "command": "data-rover.openSessionMonitor",
         "title": "세션 모니터 열기",
-        "category": "DataPilot",
+        "category": "DataRover",
         "icon": "$(pulse)"
       },
       {
-        "command": "datapilot.refreshSchema",
+        "command": "data-rover.refreshSchema",
         "title": "스키마 새로고침",
-        "category": "DataPilot",
+        "category": "DataRover",
         "icon": "$(refresh)"
       },
       {
-        "command": "datapilot.disconnectConnection",
+        "command": "data-rover.disconnectConnection",
         "title": "연결 끊기",
-        "category": "DataPilot",
+        "category": "DataRover",
         "icon": "$(debug-disconnect)"
       },
       {
-        "command": "datapilot.schema.createSchema",
+        "command": "data-rover.schema.createSchema",
         "title": "스키마 생성",
-        "category": "DataPilot"
+        "category": "DataRover"
       },
       {
-        "command": "datapilot.schema.alterSchema",
+        "command": "data-rover.schema.alterSchema",
         "title": "스키마 수정",
-        "category": "DataPilot"
+        "category": "DataRover"
       },
       {
-        "command": "datapilot.schema.dropSchema",
+        "command": "data-rover.schema.dropSchema",
         "title": "스키마 삭제",
-        "category": "DataPilot"
+        "category": "DataRover"
       },
       {
-        "command": "datapilot.schema.openQueryEditor",
+        "command": "data-rover.schema.openQueryEditor",
         "title": "쿼리 에디터 열기",
-        "category": "DataPilot",
+        "category": "DataRover",
         "icon": "$(file-code)"
       },
       {
-        "command": "datapilot.schema.openDataViewer",
+        "command": "data-rover.schema.openDataViewer",
         "title": "데이터 뷰어 열기",
-        "category": "DataPilot"
+        "category": "DataRover"
       },
       {
-        "command": "datapilot.schema.viewDDL",
+        "command": "data-rover.schema.viewDDL",
         "title": "DDL 보기",
-        "category": "DataPilot"
+        "category": "DataRover"
       },
       {
-        "command": "datapilot.schema.copyDDL",
+        "command": "data-rover.schema.copyDDL",
         "title": "DDL 복사",
-        "category": "DataPilot"
+        "category": "DataRover"
       },
       {
-        "command": "datapilot.schema.createTable",
+        "command": "data-rover.schema.createTable",
         "title": "테이블 생성",
-        "category": "DataPilot"
+        "category": "DataRover"
       },
       {
-        "command": "datapilot.schema.alterTable",
+        "command": "data-rover.schema.alterTable",
         "title": "테이블 수정",
-        "category": "DataPilot"
+        "category": "DataRover"
       },
       {
-        "command": "datapilot.schema.dropTable",
+        "command": "data-rover.schema.dropTable",
         "title": "테이블 삭제",
-        "category": "DataPilot"
+        "category": "DataRover"
       },
       {
-        "command": "datapilot.schema.createView",
+        "command": "data-rover.schema.createView",
         "title": "뷰 생성",
-        "category": "DataPilot"
+        "category": "DataRover"
       },
       {
-        "command": "datapilot.schema.alterView",
+        "command": "data-rover.schema.alterView",
         "title": "뷰 수정",
-        "category": "DataPilot"
+        "category": "DataRover"
       },
       {
-        "command": "datapilot.schema.dropView",
+        "command": "data-rover.schema.dropView",
         "title": "뷰 삭제",
-        "category": "DataPilot"
+        "category": "DataRover"
       },
       {
-        "command": "datapilot.schema.showDDL",
+        "command": "data-rover.schema.showDDL",
         "title": "DDL 패널 보기",
-        "category": "DataPilot"
+        "category": "DataRover"
       },
       {
-        "command": "datapilot.schema.openERD",
+        "command": "data-rover.schema.openERD",
         "title": "ER 다이어그램 열기",
-        "category": "DataPilot",
+        "category": "DataRover",
         "icon": "$(type-hierarchy)"
       }
     ],
     "menus": {
       "view/title": [
         {
-          "command": "datapilot.addConnection",
-          "when": "view == datapilot.connections",
+          "command": "data-rover.addConnection",
+          "when": "view == data-rover.connections",
           "group": "navigation@1"
         },
         {
-          "command": "datapilot.refreshConnections",
-          "when": "view == datapilot.connections",
+          "command": "data-rover.refreshConnections",
+          "when": "view == data-rover.connections",
           "group": "navigation@2"
         },
         {
-          "command": "datapilot.openQueryEditor",
-          "when": "view == datapilot.connections",
+          "command": "data-rover.openQueryEditor",
+          "when": "view == data-rover.connections",
           "group": "navigation@3"
         },
         {
-          "command": "datapilot.refreshSchema",
-          "when": "view == datapilot.schema",
+          "command": "data-rover.refreshSchema",
+          "when": "view == data-rover.schema",
           "group": "navigation@1"
         }
       ],
       "view/item/context": [
         {
-          "command": "datapilot.openQueryEditor",
-          "when": "view == datapilot.connections && viewItem =~ /^connection/",
+          "command": "data-rover.openQueryEditor",
+          "when": "view == data-rover.connections && viewItem =~ /^connection/",
           "group": "inline@1"
         },
         {
-          "command": "datapilot.openSessionMonitor",
-          "when": "view == datapilot.connections && viewItem =~ /^connection/",
+          "command": "data-rover.openSessionMonitor",
+          "when": "view == data-rover.connections && viewItem =~ /^connection/",
           "group": "1_actions@0"
         },
         {
-          "command": "datapilot.disconnectConnection",
-          "when": "view == datapilot.connections && viewItem == connection-active",
+          "command": "data-rover.disconnectConnection",
+          "when": "view == data-rover.connections && viewItem == connection-active",
           "group": "1_actions@1"
         },
         {
-          "command": "datapilot.editConnection",
-          "when": "view == datapilot.connections && viewItem =~ /^connection/",
+          "command": "data-rover.editConnection",
+          "when": "view == data-rover.connections && viewItem =~ /^connection/",
           "group": "1_actions@1"
         },
         {
-          "command": "datapilot.deleteConnection",
-          "when": "view == datapilot.connections && viewItem =~ /^connection/",
+          "command": "data-rover.deleteConnection",
+          "when": "view == data-rover.connections && viewItem =~ /^connection/",
           "group": "1_actions@2"
         },
         {
-          "command": "datapilot.schema.openQueryEditor",
-          "when": "view == datapilot.schema && viewItem =~ /^schema-connection/",
+          "command": "data-rover.schema.openQueryEditor",
+          "when": "view == data-rover.schema && viewItem =~ /^schema-connection/",
           "group": "inline@1"
         },
         {
-          "command": "datapilot.schema.openQueryEditor",
-          "when": "view == datapilot.schema && viewItem =~ /^schema-connection/",
+          "command": "data-rover.schema.openQueryEditor",
+          "when": "view == data-rover.schema && viewItem =~ /^schema-connection/",
           "group": "1_open@0"
         },
         {
-          "command": "datapilot.openSessionMonitor",
-          "when": "view == datapilot.schema && viewItem =~ /^schema-connection/",
+          "command": "data-rover.openSessionMonitor",
+          "when": "view == data-rover.schema && viewItem =~ /^schema-connection/",
           "group": "1_open@1"
         },
         {
-          "command": "datapilot.schema.createSchema",
-          "when": "view == datapilot.schema && viewItem =~ /^schema-connection-pg/",
+          "command": "data-rover.schema.createSchema",
+          "when": "view == data-rover.schema && viewItem =~ /^schema-connection-pg/",
           "group": "2_schema@0"
         },
         {
-          "command": "datapilot.schema.alterSchema",
-          "when": "view == datapilot.schema && viewItem == schema-pg",
+          "command": "data-rover.schema.alterSchema",
+          "when": "view == data-rover.schema && viewItem == schema-pg",
           "group": "1_actions@0"
         },
         {
-          "command": "datapilot.schema.dropSchema",
-          "when": "view == datapilot.schema && viewItem == schema-pg",
+          "command": "data-rover.schema.dropSchema",
+          "when": "view == data-rover.schema && viewItem == schema-pg",
           "group": "1_actions@1"
         },
         {
-          "command": "datapilot.schema.openERD",
-          "when": "view == datapilot.schema && viewItem =~ /^schema-(pg|mysql)/",
+          "command": "data-rover.schema.openERD",
+          "when": "view == data-rover.schema && viewItem =~ /^schema-(pg|mysql)/",
           "group": "1_open@0"
         },
         {
-          "command": "datapilot.schema.createTable",
-          "when": "view == datapilot.schema && viewItem =~ /^schema-(pg|mysql)/",
+          "command": "data-rover.schema.createTable",
+          "when": "view == data-rover.schema && viewItem =~ /^schema-(pg|mysql)/",
           "group": "2_objects@0"
         },
         {
-          "command": "datapilot.schema.createView",
-          "when": "view == datapilot.schema && viewItem =~ /^schema-(pg|mysql)/",
+          "command": "data-rover.schema.createView",
+          "when": "view == data-rover.schema && viewItem =~ /^schema-(pg|mysql)/",
           "group": "2_objects@1"
         },
         {
-          "command": "datapilot.schema.openDataViewer",
-          "when": "view == datapilot.schema && viewItem == schema-table",
+          "command": "data-rover.schema.openDataViewer",
+          "when": "view == data-rover.schema && viewItem == schema-table",
           "group": "1_open@0"
         },
         {
-          "command": "datapilot.schema.viewDDL",
-          "when": "view == datapilot.schema && viewItem =~ /^schema-(table|view|matview|function)/",
+          "command": "data-rover.schema.viewDDL",
+          "when": "view == data-rover.schema && viewItem =~ /^schema-(table|view|matview|function)/",
           "group": "2_ddl@0"
         },
         {
-          "command": "datapilot.schema.copyDDL",
-          "when": "view == datapilot.schema && viewItem =~ /^schema-(table|view)/",
+          "command": "data-rover.schema.copyDDL",
+          "when": "view == data-rover.schema && viewItem =~ /^schema-(table|view)/",
           "group": "2_ddl@1"
         },
         {
-          "command": "datapilot.schema.showDDL",
-          "when": "view == datapilot.schema && viewItem =~ /^schema-(table|view)/",
+          "command": "data-rover.schema.showDDL",
+          "when": "view == data-rover.schema && viewItem =~ /^schema-(table|view)/",
           "group": "2_ddl@2"
         },
         {
-          "command": "datapilot.schema.createTable",
-          "when": "view == datapilot.schema && viewItem == schema-category-tables",
+          "command": "data-rover.schema.createTable",
+          "when": "view == data-rover.schema && viewItem == schema-category-tables",
           "group": "3_manage@0"
         },
         {
-          "command": "datapilot.schema.alterTable",
-          "when": "view == datapilot.schema && viewItem == schema-table",
+          "command": "data-rover.schema.alterTable",
+          "when": "view == data-rover.schema && viewItem == schema-table",
           "group": "3_manage@1"
         },
         {
-          "command": "datapilot.schema.dropTable",
-          "when": "view == datapilot.schema && viewItem == schema-table",
+          "command": "data-rover.schema.dropTable",
+          "when": "view == data-rover.schema && viewItem == schema-table",
           "group": "3_manage@1"
         },
         {
-          "command": "datapilot.schema.alterView",
-          "when": "view == datapilot.schema && viewItem == schema-view",
+          "command": "data-rover.schema.alterView",
+          "when": "view == data-rover.schema && viewItem == schema-view",
           "group": "3_manage@0"
         },
         {
-          "command": "datapilot.schema.dropView",
-          "when": "view == datapilot.schema && viewItem == schema-view",
+          "command": "data-rover.schema.dropView",
+          "when": "view == data-rover.schema && viewItem == schema-view",
           "group": "3_manage@1"
         }
       ]

@@ -1,7 +1,7 @@
 import * as vscode from 'vscode'
 
 export class DdlContentProvider implements vscode.TextDocumentContentProvider {
-  static readonly scheme = 'datapilot-ddl'
+  static readonly scheme = 'data-rover-ddl'
 
   private content = new Map<string, string>()
   private _onDidChange = new vscode.EventEmitter<vscode.Uri>()

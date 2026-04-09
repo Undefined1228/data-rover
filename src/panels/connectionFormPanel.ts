@@ -32,7 +32,7 @@ export class ConnectionFormPanel extends PanelBase {
     private connectionId?: string
   ) {
     super(
-      'datapilot.connectionForm',
+      'data-rover.connectionForm',
       connectionId ? '연결 편집' : '연결 추가',
       extensionUri,
       'connectionForm'
@@ -87,7 +87,7 @@ export class ConnectionFormPanel extends PanelBase {
         ? await this.connectionManager.update(this.connectionId, data)
         : await this.connectionManager.add(data)
       this.post('conn:save:response', { ok: true, conn })
-      vscode.commands.executeCommand('datapilot.refreshConnections')
+      vscode.commands.executeCommand('data-rover.refreshConnections')
       this.panel.dispose()
     } catch (err) {
       this.post('conn:save:response', { ok: false, message: (err as Error).message })

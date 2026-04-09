@@ -14,7 +14,7 @@ interface HistoryEntry {
 }
 
 function historyKey(connectionId: string): string {
-  return `datapilot.queryHistory.${connectionId}`
+  return `data-rover.queryHistory.${connectionId}`
 }
 
 export class QueryEditorPanel extends PanelBase {
@@ -35,7 +35,7 @@ export class QueryEditorPanel extends PanelBase {
     private readonly connectionManager: ConnectionManager,
     private readonly context: vscode.ExtensionContext
   ) {
-    super('datapilot.queryEditor', `Query — ${connectionName}`, extensionUri, 'queryEditor')
+    super('data-rover.queryEditor', `Query — ${connectionName}`, extensionUri, 'queryEditor')
   }
 
   protected onMessage(message: { type: string; payload?: unknown }): void {

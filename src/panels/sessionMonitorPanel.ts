@@ -29,7 +29,7 @@ export class SessionMonitorPanel extends PanelBase {
     connectionName: string,
     private readonly connectionManager: ConnectionManager
   ) {
-    super('datapilot.sessionMonitor', `Monitor — ${connectionName}`, extensionUri, 'sessionMonitor')
+    super('data-rover.sessionMonitor', `Monitor — ${connectionName}`, extensionUri, 'sessionMonitor')
 
     this.panel.onDidChangeViewState((e) => {
       if (e.webviewPanel.visible) {

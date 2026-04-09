@@ -9,7 +9,7 @@ import type { IDriver } from '../drivers/base'
 import { PostgresDriver } from '../drivers/postgres'
 import { MysqlDriver } from '../drivers/mysql'
 
-const STATE_KEY = 'datapilot.connections'
+const STATE_KEY = 'data-rover.connections'
 
 export class ConnectionManager {
   private secretStore: SecretStore

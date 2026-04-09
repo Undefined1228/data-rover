@@ -30,7 +30,7 @@ export class ErdPanel extends PanelBase {
     connectionName: string,
     private readonly connectionManager: ConnectionManager
   ) {
-    super('datapilot.erd', `ERD — ${connectionName}/${schemaName}`, extensionUri, 'erd')
+    super('data-rover.erd', `ERD — ${connectionName}/${schemaName}`, extensionUri, 'erd')
   }
 
   protected onMessage(message: { type: string; payload?: unknown }): void {

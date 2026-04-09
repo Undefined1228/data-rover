@@ -37,8 +37,8 @@ export function activate(context: vscode.ExtensionContext) {
   const schemaProvider = new SchemaProvider(connectionManager, () => connectionsProvider.refresh())
   const ddlContentProvider = new DdlContentProvider()
 
-  vscode.window.registerTreeDataProvider('datapilot.connections', connectionsProvider)
-  const schemaTreeView = vscode.window.createTreeView('datapilot.schema', {
+  vscode.window.registerTreeDataProvider('data-rover.connections', connectionsProvider)
+  const schemaTreeView = vscode.window.createTreeView('data-rover.schema', {
     treeDataProvider: schemaProvider,
     canSelectMany: true,
   })
@@ -48,19 +48,19 @@ export function activate(context: vscode.ExtensionContext) {
   )
 
   context.subscriptions.push(
-    vscode.commands.registerCommand('datapilot.addConnection', () => {
+    vscode.commands.registerCommand('data-rover.addConnection', () => {
       ConnectionFormPanel.open(context.extensionUri, connectionManager)
     }),
 
-    vscode.commands.registerCommand('datapilot.refreshConnections', () => {
+    vscode.commands.registerCommand('data-rover.refreshConnections', () => {
       connectionsProvider.refresh()
     }),
 
-    vscode.commands.registerCommand('datapilot.editConnection', (item?: ConnectionItem) => {
+    vscode.commands.registerCommand('data-rover.editConnection', (item?: ConnectionItem) => {
       ConnectionFormPanel.open(context.extensionUri, connectionManager, item?.id)
     }),
 
-    vscode.commands.registerCommand('datapilot.deleteConnection', async (item?: ConnectionItem) => {
+    vscode.commands.registerCommand('data-rover.deleteConnection', async (item?: ConnectionItem) => {
       if (!item) return
       const confirm = await vscode.window.showWarningMessage(
         '연결을 삭제하시겠습니까?',
@@ -73,13 +73,13 @@ export function activate(context: vscode.ExtensionContext) {
       }
     }),
 
-    vscode.commands.registerCommand('datapilot.disconnectConnection', async (item?: ConnectionItem) => {
+    vscode.commands.registerCommand('data-rover.disconnectConnection', async (item?: ConnectionItem) => {
       if (!item) return
       await connectionManager.disconnect(item.id)
       connectionsProvider.refresh()
     }),
 
-    vscode.commands.registerCommand('datapilot.openQueryEditor', async (item?: ConnectionItem) => {
+    vscode.commands.registerCommand('data-rover.openQueryEditor', async (item?: ConnectionItem) => {
       let connectionId: string | undefined = item?.id
       if (!connectionId) {
         const connections = connectionManager.getAll()
@@ -99,7 +99,7 @@ export function activate(context: vscode.ExtensionContext) {
       QueryEditorPanel.open(context.extensionUri, connectionId, conn.name, connectionManager, context)
     }),
 
-    vscode.commands.registerCommand('datapilot.openDataViewer', async (item?: ConnectionItem) => {
+    vscode.commands.registerCommand('data-rover.openDataViewer', async (item?: ConnectionItem) => {
       let connectionId: string | undefined = item?.id
       if (!connectionId) {
         const connections = connectionManager.getAll()
@@ -121,7 +121,7 @@ export function activate(context: vscode.ExtensionContext) {
       DataViewerPanel.open(context.extensionUri, connectionId, conn.name, 'public', tableName, 'table', connectionManager)
     }),
 
-    vscode.commands.registerCommand('datapilot.openERD', async () => {
+    vscode.commands.registerCommand('data-rover.openERD', async () => {
       const connections = connectionManager.getAll()
       if (connections.length === 0) {
         vscode.window.showWarningMessage('연결을 먼저 추가해 주세요.')
@@ -137,14 +137,14 @@ export function activate(context: vscode.ExtensionContext) {
       ErdPanel.open(context.extensionUri, picked.id, schemaName, picked.label, connectionManager)
     }),
 
-    vscode.commands.registerCommand('datapilot.schema.openERD', (item?: SchemaTreeItem) => {
+    vscode.commands.registerCommand('data-rover.schema.openERD', (item?: SchemaTreeItem) => {
       if (!item) return
       const conn = connectionManager.getById(item.connectionId)
       if (!conn) return
       ErdPanel.open(context.extensionUri, item.connectionId, item.schemaName, conn.name, connectionManager)
     }),
 
-    vscode.commands.registerCommand('datapilot.openSessionMonitor', async (item?: ConnectionItem | ConnectionTreeItem) => {
+    vscode.commands.registerCommand('data-rover.openSessionMonitor', async (item?: ConnectionItem | ConnectionTreeItem) => {
       let connectionId: string | undefined = item instanceof ConnectionTreeItem ? item.connectionId : item?.id
       if (!connectionId) {
         const connections = connectionManager.getAll()
@@ -164,24 +164,24 @@ export function activate(context: vscode.ExtensionContext) {
       SessionMonitorPanel.open(context.extensionUri, connectionId, conn.name, connectionManager)
     }),
 
-    vscode.commands.registerCommand('datapilot.schema.openQueryEditor', (item?: ConnectionTreeItem) => {
+    vscode.commands.registerCommand('data-rover.schema.openQueryEditor', (item?: ConnectionTreeItem) => {
       if (!item) return
       const conn = connectionManager.getById(item.connectionId)
       if (!conn) return
       QueryEditorPanel.open(context.extensionUri, item.connectionId, conn.name, connectionManager, context)
     }),
 
-    vscode.commands.registerCommand('datapilot.refreshSchema', () => {
+    vscode.commands.registerCommand('data-rover.refreshSchema', () => {
       schemaProvider.refresh()
     }),
 
     // ── 스키마 노드 ──────────────────────────────────────────────────────────
-    vscode.commands.registerCommand('datapilot.schema.createSchema', (item?: ConnectionTreeItem) => {
+    vscode.commands.registerCommand('data-rover.schema.createSchema', (item?: ConnectionTreeItem) => {
       if (!item) return
       SchemaManagementPanel.open(context.extensionUri, item.connectionId, connectionManager, 'createSchema', {})
     }),
 
-    vscode.commands.registerCommand('datapilot.schema.alterSchema', async (item?: SchemaTreeItem) => {
+    vscode.commands.registerCommand('data-rover.schema.alterSchema', async (item?: SchemaTreeItem) => {
       if (!item) return
       try {
         const driver = await connectionManager.connect(item.connectionId)
@@ -195,7 +195,7 @@ export function activate(context: vscode.ExtensionContext) {
       }
     }),
 
-    vscode.commands.registerCommand('datapilot.schema.dropSchema', (item?: SchemaTreeItem) => {
+    vscode.commands.registerCommand('data-rover.schema.dropSchema', (item?: SchemaTreeItem) => {
       if (!item) return
       SchemaManagementPanel.open(context.extensionUri, item.connectionId, connectionManager, 'dropSchema', {
         schemaName: item.schemaName,
@@ -203,7 +203,7 @@ export function activate(context: vscode.ExtensionContext) {
     }),
 
     // ── 테이블/뷰 노드 ──────────────────────────────────────────────────────
-    vscode.commands.registerCommand('datapilot.schema.openDataViewer', (item?: TableTreeItem | ViewTreeItem | MatViewTreeItem) => {
+    vscode.commands.registerCommand('data-rover.schema.openDataViewer', (item?: TableTreeItem | ViewTreeItem | MatViewTreeItem) => {
       if (!item) return
       const conn = connectionManager.getById(item.connectionId)
       if (!conn) return
@@ -222,7 +222,7 @@ export function activate(context: vscode.ExtensionContext) {
       DataViewerPanel.open(context.extensionUri, item.connectionId, conn.name, item.schemaName, tableName, tableType, connectionManager)
     }),
 
-    vscode.commands.registerCommand('datapilot.schema.viewDDL', async (item?: TableTreeItem | ViewTreeItem | MatViewTreeItem | FunctionTreeItem) => {
+    vscode.commands.registerCommand('data-rover.schema.viewDDL', async (item?: TableTreeItem | ViewTreeItem | MatViewTreeItem | FunctionTreeItem) => {
       const target = toDdlTarget(item)
       if (!target) return
       try {
@@ -237,7 +237,7 @@ export function activate(context: vscode.ExtensionContext) {
       }
     }),
 
-    vscode.commands.registerCommand('datapilot.schema.copyDDL', async (item?: TableTreeItem | ViewTreeItem, allSelected?: (TableTreeItem | ViewTreeItem)[]) => {
+    vscode.commands.registerCommand('data-rover.schema.copyDDL', async (item?: TableTreeItem | ViewTreeItem, allSelected?: (TableTreeItem | ViewTreeItem)[]) => {
       const targets = (allSelected?.length ? allSelected : item ? [item] : [])
         .map(toDdlTarget)
         .filter((t): t is DdlTarget => t !== undefined)
@@ -257,7 +257,7 @@ export function activate(context: vscode.ExtensionContext) {
       }
     }),
 
-    vscode.commands.registerCommand('datapilot.schema.createTable', (item?: CategoryTreeItem | SchemaTreeItem) => {
+    vscode.commands.registerCommand('data-rover.schema.createTable', (item?: CategoryTreeItem | SchemaTreeItem) => {
       if (!item) return
       const conn = connectionManager.getById(item.connectionId)
       if (!conn) return
@@ -267,7 +267,7 @@ export function activate(context: vscode.ExtensionContext) {
       })
     }),
 
-    vscode.commands.registerCommand('datapilot.schema.alterTable', (item?: TableTreeItem) => {
+    vscode.commands.registerCommand('data-rover.schema.alterTable', (item?: TableTreeItem) => {
       if (!item) return
       const conn = connectionManager.getById(item.connectionId)
       if (!conn) return
@@ -278,18 +278,18 @@ export function activate(context: vscode.ExtensionContext) {
       })
     }),
 
-    vscode.commands.registerCommand('datapilot.schema.dropTable', (_item?: TableTreeItem) => {
+    vscode.commands.registerCommand('data-rover.schema.dropTable', (_item?: TableTreeItem) => {
       vscode.window.showInformationMessage('테이블 삭제는 Phase 6에서 구현됩니다.')
     }),
 
-    vscode.commands.registerCommand('datapilot.schema.createView', (item?: SchemaTreeItem) => {
+    vscode.commands.registerCommand('data-rover.schema.createView', (item?: SchemaTreeItem) => {
       if (!item) return
       SchemaManagementPanel.open(context.extensionUri, item.connectionId, connectionManager, 'createView', {
         schemaName: item.schemaName,
       })
     }),
 
-    vscode.commands.registerCommand('datapilot.schema.alterView', (item?: ViewTreeItem) => {
+    vscode.commands.registerCommand('data-rover.schema.alterView', (item?: ViewTreeItem) => {
       if (!item) return
       SchemaManagementPanel.open(context.extensionUri, item.connectionId, connectionManager, 'alterView', {
         schemaName: item.schemaName,
@@ -297,7 +297,7 @@ export function activate(context: vscode.ExtensionContext) {
       })
     }),
 
-    vscode.commands.registerCommand('datapilot.schema.dropView', (item?: ViewTreeItem) => {
+    vscode.commands.registerCommand('data-rover.schema.dropView', (item?: ViewTreeItem) => {
       if (!item) return
       SchemaManagementPanel.open(context.extensionUri, item.connectionId, connectionManager, 'dropView', {
         schemaName: item.schemaName,
@@ -306,7 +306,7 @@ export function activate(context: vscode.ExtensionContext) {
     }),
 
     vscode.commands.registerCommand(
-      'datapilot.schema.showDDL',
+      'data-rover.schema.showDDL',
       (item?: TableTreeItem | ViewTreeItem, allSelected?: (TableTreeItem | ViewTreeItem)[]) => {
         const targets = (allSelected?.length ? allSelected : item ? [item] : []).filter(
           (i): i is TableTreeItem | ViewTreeItem =>

@@ -33,7 +33,7 @@ export class DataViewerPanel extends PanelBase {
     private readonly tableType: 'table' | 'view' | 'matview',
     private readonly connectionManager: ConnectionManager
   ) {
-    super('datapilot.dataViewer', `${tableName} — ${connectionName}`, extensionUri, 'dataViewer')
+    super('data-rover.dataViewer', `${tableName} — ${connectionName}`, extensionUri, 'dataViewer')
   }
 
   protected onMessage(message: { type: string; payload?: unknown }): void {

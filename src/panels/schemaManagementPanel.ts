@@ -53,7 +53,7 @@ export class SchemaManagementPanel extends PanelBase {
     private readonly dialogData: unknown,
     ddlObjects?: DdlObject[]
   ) {
-    super('datapilot.schemaManagement', DIALOG_TITLES[dialogType], extensionUri, 'schemaManagement')
+    super('data-rover.schemaManagement', DIALOG_TITLES[dialogType], extensionUri, 'schemaManagement')
     this.ddlObjects = ddlObjects
   }
 
@@ -124,7 +124,7 @@ export class SchemaManagementPanel extends PanelBase {
       const driver = await this.connectionManager.connect(this.connectionId)
       await driver.createSchema(payload.name, payload.owner)
       this.post('schema:create:response', { ok: true })
-      vscode.commands.executeCommand('datapilot.refreshSchema')
+      vscode.commands.executeCommand('data-rover.refreshSchema')
       this.panel.dispose()
     } catch (err) {
       this.post('schema:create:response', { ok: false, message: err instanceof Error ? err.message : String(err) })
@@ -136,7 +136,7 @@ export class SchemaManagementPanel extends PanelBase {
       const driver = await this.connectionManager.connect(this.connectionId)
       await driver.alterSchema(payload.schema, payload.newName, payload.newOwner)
       this.post('schema:alter:response', { ok: true })
-      vscode.commands.executeCommand('datapilot.refreshSchema')
+      vscode.commands.executeCommand('data-rover.refreshSchema')
       this.panel.dispose()
     } catch (err) {
       this.post('schema:alter:response', { ok: false, message: err instanceof Error ? err.message : String(err) })
@@ -148,7 +148,7 @@ export class SchemaManagementPanel extends PanelBase {
       const driver = await this.connectionManager.connect(this.connectionId)
       await driver.dropSchema(payload.schema, payload.cascade)
       this.post('schema:drop:response', { ok: true })
-      vscode.commands.executeCommand('datapilot.refreshSchema')
+      vscode.commands.executeCommand('data-rover.refreshSchema')
       this.panel.dispose()
     } catch (err) {
       this.post('schema:drop:response', { ok: false, message: err instanceof Error ? err.message : String(err) })
@@ -171,7 +171,7 @@ export class SchemaManagementPanel extends PanelBase {
       const driver = await this.connectionManager.connect(this.connectionId)
       await driver.createTable(payload)
       this.post('table:create:response', { ok: true })
-      vscode.commands.executeCommand('datapilot.refreshSchema')
+      vscode.commands.executeCommand('data-rover.refreshSchema')
       this.panel.dispose()
     } catch (err) {
       this.post('table:create:response', { ok: false, message: err instanceof Error ? err.message : String(err) })
@@ -183,7 +183,7 @@ export class SchemaManagementPanel extends PanelBase {
       const driver = await this.connectionManager.connect(this.connectionId)
       await driver.alterTable(payload)
       this.post('table:alter:response', { ok: true })
-      vscode.commands.executeCommand('datapilot.refreshSchema')
+      vscode.commands.executeCommand('data-rover.refreshSchema')
       this.panel.dispose()
     } catch (err) {
       this.post('table:alter:response', { ok: false, message: err instanceof Error ? err.message : String(err) })
@@ -195,7 +195,7 @@ export class SchemaManagementPanel extends PanelBase {
       const driver = await this.connectionManager.connect(this.connectionId)
       await driver.createView(payload.schema, payload.name, payload.query)
       this.post('view:create:response', { ok: true })
-      vscode.commands.executeCommand('datapilot.refreshSchema')
+      vscode.commands.executeCommand('data-rover.refreshSchema')
       this.panel.dispose()
     } catch (err) {
       this.post('view:create:response', { ok: false, message: err instanceof Error ? err.message : String(err) })
@@ -207,7 +207,7 @@ export class SchemaManagementPanel extends PanelBase {
       const driver = await this.connectionManager.connect(this.connectionId)
       await driver.alterView(payload.schema, payload.name, payload.newName, payload.newQuery)
       this.post('view:alter:response', { ok: true })
-      vscode.commands.executeCommand('datapilot.refreshSchema')
+      vscode.commands.executeCommand('data-rover.refreshSchema')
       this.panel.dispose()
     } catch (err) {
       this.post('view:alter:response', { ok: false, message: err instanceof Error ? err.message : String(err) })
@@ -219,7 +219,7 @@ export class SchemaManagementPanel extends PanelBase {
       const driver = await this.connectionManager.connect(this.connectionId)
       await driver.dropView(payload.schema, payload.name, payload.cascade)
       this.post('view:drop:response', { ok: true })
-      vscode.commands.executeCommand('datapilot.refreshSchema')
+      vscode.commands.executeCommand('data-rover.refreshSchema')
       this.panel.dispose()
     } catch (err) {
       this.post('view:drop:response', { ok: false, message: err instanceof Error ? err.message : String(err) })
@@ -231,7 +231,7 @@ export class SchemaManagementPanel extends PanelBase {
       const driver = await this.connectionManager.connect(this.connectionId)
       await driver.createIndex(payload)
       this.post('index:create:response', { ok: true })
-      vscode.commands.executeCommand('datapilot.refreshSchema')
+      vscode.commands.executeCommand('data-rover.refreshSchema')
       this.panel.dispose()
     } catch (err) {
       this.post('index:create:response', { ok: false, message: err instanceof Error ? err.message : String(err) })
@@ -243,7 +243,7 @@ export class SchemaManagementPanel extends PanelBase {
       const driver = await this.connectionManager.connect(this.connectionId)
       await driver.dropIndex(payload.schema, payload.indexName)
       this.post('index:drop:response', { ok: true })
-      vscode.commands.executeCommand('datapilot.refreshSchema')
+      vscode.commands.executeCommand('data-rover.refreshSchema')
       this.panel.dispose()
     } catch (err) {
       this.post('index:drop:response', { ok: false, message: err instanceof Error ? err.message : String(err) })
