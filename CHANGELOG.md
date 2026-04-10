@@ -5,6 +5,7 @@
 ### 수정
 - `pg`, `mysql2`, `ssh2`를 번들에 포함하도록 변경 — 배포 환경에서 DB 드라이버 누락으로 연결 생성 시 에러가 발생하던 문제 해결
   - `build.mjs` external 목록에서 제거하고 선택적 네이티브 바이너리(`pg-native`, `cpu-features`, `bufferutil`, `utf-8-validate`)만 external로 유지
+  - `ssh2` 내부 네이티브 바이너리(`sshcrypto.node`) 처리를 위해 esbuild `loader: { '.node': 'copy' }` 추가
 
 ## [1.0.0] - 2026-04-10
 

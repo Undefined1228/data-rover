@@ -11,6 +11,7 @@ const ctx = await esbuild.context({
   platform: 'node',
   sourcemap: watch,
   minify: false,
+  loader: { '.node': 'copy' },
 })
 
 if (watch) {
