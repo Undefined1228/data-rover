@@ -6,7 +6,7 @@ const ctx = await esbuild.context({
   entryPoints: ['src/extension.ts'],
   bundle: true,
   outfile: 'out/extension.js',
-  external: ['vscode', 'pg', 'mysql2', 'ssh2'],
+  external: ['vscode', 'pg-native', 'cpu-features', 'bufferutil', 'utf-8-validate'],
   format: 'cjs',
   platform: 'node',
   sourcemap: watch,
