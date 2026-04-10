@@ -1,6 +1,11 @@
 {
   "name": "data-rover",
+  "publisher": "ach9948",
   "displayName": "DataRover",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/Undefined1228/data-rover"
+  },
   "description": "Database management tool for VS Code",
   "version": "0.0.1",
   "engines": {
