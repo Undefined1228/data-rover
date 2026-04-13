@@ -5,6 +5,7 @@
   import { EditorView, keymap, lineNumbers, highlightActiveLine, highlightActiveLineGutter } from '@codemirror/view'
   import { EditorState, Compartment } from '@codemirror/state'
   import { defaultKeymap, history, historyKeymap, indentWithTab } from '@codemirror/commands'
+  import { search, searchKeymap } from '@codemirror/search'
   import { sql, PostgreSQL, MySQL, type SQLDialect } from '@codemirror/lang-sql'
   import { syntaxHighlighting, defaultHighlightStyle } from '@codemirror/language'
   import { autocompletion, completionKeymap } from '@codemirror/autocomplete'
@@ -147,6 +148,63 @@
       fontWeight: '600',
       color: 'var(--vscode-editorLink-activeForeground, var(--vscode-focusBorder))',
     },
+    '.cm-search': {
+      backgroundColor: 'var(--vscode-editorWidget-background, var(--vscode-editor-background))',
+      border: '1px solid var(--vscode-panel-border, rgba(128,128,128,0.3))',
+      borderRadius: '6px',
+      padding: '6px 8px',
+      display: 'flex',
+      flexWrap: 'wrap',
+      gap: '4px',
+      alignItems: 'center',
+    },
+    '.cm-search input': {
+      backgroundColor: 'var(--vscode-input-background)',
+      color: 'var(--vscode-input-foreground)',
+      border: '1px solid var(--vscode-input-border, rgba(128,128,128,0.3))',
+      borderRadius: '4px',
+      padding: '2px 6px',
+      fontSize: '12px',
+      outline: 'none',
+    },
+    '.cm-search input:focus': {
+      borderColor: 'var(--vscode-focusBorder)',
+    },
+    '.cm-search button': {
+      backgroundColor: 'var(--vscode-button-background)',
+      color: 'var(--vscode-button-foreground)',
+      border: 'none',
+      borderRadius: '4px',
+      padding: '2px 8px',
+      fontSize: '12px',
+      cursor: 'pointer',
+    },
+    '.cm-search button:hover': {
+      backgroundColor: 'var(--vscode-button-hoverBackground)',
+    },
+    '.cm-search button[name="close"]': {
+      backgroundColor: 'transparent',
+      color: 'var(--vscode-foreground)',
+    },
+    '.cm-search button[name="close"]:hover': {
+      backgroundColor: 'var(--vscode-toolbar-hoverBackground)',
+    },
+    '.cm-search label': {
+      fontSize: '12px',
+      color: 'var(--vscode-foreground)',
+      display: 'flex',
+      alignItems: 'center',
+      gap: '3px',
+      cursor: 'pointer',
+    },
+    '.cm-searchMatch': {
+      backgroundColor: 'color-mix(in srgb, var(--vscode-editor-findMatchHighlightBackground, #ffff0040) 60%, transparent)',
+      borderRadius: '2px',
+    },
+    '.cm-searchMatch-selected': {
+      backgroundColor: 'var(--vscode-editor-findMatchBackground, #ff6a0060)',
+      borderRadius: '2px',
+    },
   })
 
   onMount(async () => {
@@ -161,7 +219,8 @@
           highlightActiveLine(),
           highlightActiveLineGutter(),
           EditorView.contentAttributes.of({ autocorrect: 'off', autocapitalize: 'off', spellcheck: 'false' }),
-          keymap.of([...completionKeymap, ...defaultKeymap, ...historyKeymap, indentWithTab]),
+          search(),
+          keymap.of([...searchKeymap, ...completionKeymap, ...defaultKeymap, ...historyKeymap, indentWithTab]),
           baseTheme,
           autocompletion({ activateOnTyping: true, activateOnTypingDelay: 0, interactionDelay: 0, maxRenderedOptions: 15 }),
           highlightCompartment.of(buildHighlightExtension()),

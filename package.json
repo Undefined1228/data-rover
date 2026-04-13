@@ -364,6 +364,7 @@
     "@codemirror/lang-sql": "^6.x",
     "@codemirror/language": "^6.x",
     "@codemirror/lint": "^6.x",
+    "@codemirror/search": "^6.6.0",
     "@codemirror/state": "^6.x",
     "@codemirror/theme-one-dark": "^6.x",
     "@codemirror/view": "^6.x",
