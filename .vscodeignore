@@ -9,6 +9,7 @@ node_modules/**
 build.mjs
 tsconfig*.json
 .eslintrc*
+eslint.config.mjs
 plans/**
 work-logs/**
 CLAUDE.md
