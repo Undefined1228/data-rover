@@ -3,7 +3,7 @@
   import { Play, WrapText, History, Square } from 'lucide-svelte'
   import { format as sqlFormat } from 'sql-formatter'
   import { EditorView, keymap, lineNumbers, highlightActiveLine, highlightActiveLineGutter } from '@codemirror/view'
-  import { EditorState, Compartment } from '@codemirror/state'
+  import { EditorState, Compartment, Prec } from '@codemirror/state'
   import { defaultKeymap, history, historyKeymap, indentWithTab } from '@codemirror/commands'
   import { search, searchKeymap } from '@codemirror/search'
   import { sql, PostgreSQL, MySQL, type SQLDialect } from '@codemirror/lang-sql'
@@ -236,21 +236,10 @@
           EditorView.updateListener.of((update) => {
             if (update.docChanged) editorContent = update.state.doc.toString()
           }),
-          EditorView.domEventHandlers({
-            keydown(e) {
-              if (e.altKey && e.shiftKey && e.key === 'F') {
-                e.preventDefault()
-                formatQuery()
-                return true
-              }
-              if ((e.metaKey || e.ctrlKey) && !e.shiftKey && e.key === 'Enter') {
-                e.preventDefault()
-                void runQuery()
-                return true
-              }
-              return false
-            },
-          }),
+          Prec.highest(keymap.of([
+            { key: 'Mod-Enter', run: () => { void runQuery(); return true } },
+            { key: 'Alt-Shift-f', run: () => { formatQuery(); return true } },
+          ])),
         ],
       }),
       parent: editorContainer,
