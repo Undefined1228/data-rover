@@ -37,7 +37,12 @@ export function activate(context: vscode.ExtensionContext) {
   const schemaProvider = new SchemaProvider(connectionManager, () => connectionsProvider.refresh())
   const ddlContentProvider = new DdlContentProvider()
 
-  vscode.window.registerTreeDataProvider('data-rover.connections', connectionsProvider)
+  const connectionsTreeView = vscode.window.createTreeView('data-rover.connections', {
+    treeDataProvider: connectionsProvider,
+  })
+  connectionsTreeView.description = `v${context.extension.packageJSON.version}`
+  context.subscriptions.push(connectionsTreeView)
+
   const schemaTreeView = vscode.window.createTreeView('data-rover.schema', {
     treeDataProvider: schemaProvider,
     canSelectMany: true,
