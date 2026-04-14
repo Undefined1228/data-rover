@@ -1,5 +1,23 @@
 # Changelog
 
+## [1.2.0] - 2026-04-14
+
+### 추가
+- CSV 가져오기 — 스키마 탐색기에서 테이블을 우클릭해 CSV 파일을 직접 임포트. 헤더·구분자 자동 감지, 컬럼 매핑, 진행률 표시 지원
+
+### 수정
+- 쿼리 에디터 실행 단축키(`Cmd+Enter` / `Ctrl+Enter`) OS별 동작 불일치 수정 — `EditorView.domEventHandlers` 방식을 CodeMirror `Prec.highest(keymap.of([...]))` 방식으로 교체
+
+## [1.1.1] - 2026-04-13
+
+### 수정
+- Marketplace 아이콘 추가 및 `.vscodeignore` 누락 항목 보완
+
+## [1.1.0] - 2026-04-13
+
+### 추가
+- 쿼리 에디터 찾기/바꾸기 기능 (`@codemirror/search`)
+
 ## [1.0.1] - 2026-04-11
 
 ### 수정

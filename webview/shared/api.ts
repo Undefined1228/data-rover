@@ -14,6 +14,10 @@ window.addEventListener('message', (event: MessageEvent) => {
   handlers.get(type)?.(payload)
 })
 
+function serialize(value: unknown): unknown {
+  return JSON.parse(JSON.stringify(value ?? null))
+}
+
 function request<T = unknown>(type: string, payload?: unknown): Promise<T> {
   return new Promise((resolve, reject) => {
     const responseType = `${type}:response`
@@ -25,7 +29,7 @@ function request<T = unknown>(type: string, payload?: unknown): Promise<T> {
         resolve(data as T)
       }
     })
-    vscode.postMessage({ type, payload })
+    vscode.postMessage({ type, payload: payload !== undefined ? serialize(payload) : undefined })
   })
 }
 
@@ -35,7 +39,7 @@ function on(type: string, handler: MessageHandler): () => void {
 }
 
 function notify(type: string, payload?: unknown): void {
-  vscode.postMessage({ type, payload })
+  vscode.postMessage({ type, payload: payload !== undefined ? serialize(payload) : undefined })
 }
 
 export const api = { request, on, notify }

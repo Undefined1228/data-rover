@@ -9,6 +9,7 @@
   import CreateViewDialog from './CreateViewDialog.svelte'
   import CreateIndexDialog from './CreateIndexDialog.svelte'
   import DDLDialog from './DDLDialog.svelte'
+  import CsvImportDialog from './CsvImportDialog.svelte'
   import type { TableInfo, ColumnInfo } from './types'
 
   let dialogType = $state('')
@@ -53,4 +54,11 @@
   />
 {:else if dialogType === 'showDDL'}
   <DDLDialog dbType={dialogData.dbType as string} />
+{:else if dialogType === 'csvImport'}
+  <CsvImportDialog
+    schemaName={dialogData.schemaName as string}
+    tableName={dialogData.tableName as string}
+    tableColumns={dialogData.tableColumns as ColumnInfo[]}
+    dbType={dialogData.dbType as string}
+  />
 {/if}

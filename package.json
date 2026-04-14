@@ -7,7 +7,7 @@
     "url": "https://github.com/Undefined1228/data-rover"
   },
   "description": "Database management tool for VS Code",
-  "version": "1.1.1",
+  "version": "1.2.0",
   "engines": {
     "vscode": "^1.85.0"
   },
@@ -178,6 +178,11 @@
         "title": "ER 다이어그램 열기",
         "category": "DataRover",
         "icon": "$(type-hierarchy)"
+      },
+      {
+        "command": "data-rover.schema.importCsv",
+        "title": "CSV로 가져오기",
+        "category": "DataRover"
       }
     ],
     "menus": {
@@ -310,6 +315,11 @@
           "group": "3_manage@1"
         },
         {
+          "command": "data-rover.schema.importCsv",
+          "when": "view == data-rover.schema && viewItem == schema-table",
+          "group": "4_import@0"
+        },
+        {
           "command": "data-rover.schema.alterView",
           "when": "view == data-rover.schema && viewItem == schema-view",
           "group": "3_manage@0"
@@ -342,6 +352,7 @@
     "@types/node": "^20.x",
     "@types/pg": "^8.x",
     "@types/ssh2": "^1.x",
+    "@types/papaparse": "^5.x",
     "@types/vscode": "^1.85.0",
     "@typescript-eslint/eslint-plugin": "^8.58.1",
     "@typescript-eslint/parser": "^8.58.1",
@@ -361,6 +372,7 @@
     "vite": "^6.0.0"
   },
   "dependencies": {
+    "papaparse": "^5.x",
     "@codemirror/commands": "^6.x",
     "@codemirror/lang-sql": "^6.x",
     "@codemirror/language": "^6.x",

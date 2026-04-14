@@ -323,7 +323,19 @@ export function activate(context: vscode.ExtensionContext) {
         )
         SchemaManagementPanel.open(context.extensionUri, connectionId, connectionManager, 'showDDL', {}, ddlObjects)
       }
-    )
+    ),
+
+    vscode.commands.registerCommand('data-rover.schema.importCsv', (item?: TableTreeItem) => {
+      if (!item) return
+      const conn = connectionManager.getById(item.connectionId)
+      if (!conn) return
+      SchemaManagementPanel.open(context.extensionUri, item.connectionId, connectionManager, 'csvImport', {
+        schemaName: item.schemaName,
+        tableName: item.tableInfo.name,
+        tableColumns: item.tableInfo.columns,
+        dbType: conn.dbType,
+      })
+    })
   )
 }
 

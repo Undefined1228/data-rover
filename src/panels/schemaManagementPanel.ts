@@ -3,6 +3,7 @@ import { PanelBase } from './PanelBase'
 import type { ConnectionManager } from '../connection/connectionManager'
 import type { CreateTableParams, AlterTableParams, CreateIndexParams } from '../drivers/ddlBuilder'
 import { buildPostgresDDL, buildMysqlDDL } from '../drivers/ddlBuilder'
+import { previewCsv, importCsvToTable, type CsvImportParams } from '../csvImport'
 
 export type SchemaDialogType =
   | 'createSchema'
@@ -15,6 +16,7 @@ export type SchemaDialogType =
   | 'dropView'
   | 'createIndex'
   | 'showDDL'
+  | 'csvImport'
 
 const DIALOG_TITLES: Record<SchemaDialogType, string> = {
   createSchema: '스키마 생성',
@@ -27,6 +29,7 @@ const DIALOG_TITLES: Record<SchemaDialogType, string> = {
   dropView: '뷰 삭제',
   createIndex: '인덱스 생성',
   showDDL: 'DDL 보기',
+  csvImport: 'CSV 가져오기',
 }
 
 type DdlObject = { schema: string; name: string; type: 'table' | 'view' | 'matview' | 'function' }
@@ -105,6 +108,15 @@ export class SchemaManagementPanel extends PanelBase {
         break
       case 'db:objects-ddl':
         this.handleObjectsDDL()
+        break
+      case 'csv:pick-file':
+        this.handleCsvPickFile()
+        break
+      case 'csv:preview':
+        this.handleCsvPreview(message.payload as string)
+        break
+      case 'csv:import':
+        this.handleCsvImport(message.payload as CsvImportParams)
         break
     }
   }
@@ -284,6 +296,37 @@ export class SchemaManagementPanel extends PanelBase {
       this.post('db:object-ddl:response', { ddl })
     } catch (err) {
       this.post('db:object-ddl:response', { error: err instanceof Error ? err.message : String(err) })
+    }
+  }
+
+  private async handleCsvPickFile(): Promise<void> {
+    const uris = await vscode.window.showOpenDialog({
+      canSelectMany: false,
+      filters: { 'CSV 파일': ['csv'] },
+      title: 'CSV 파일 선택',
+    })
+    const filePath = uris?.[0]?.fsPath ?? null
+    this.post('csv:pick-file:response', { filePath })
+  }
+
+  private handleCsvPreview(filePath: string): void {
+    try {
+      const result = previewCsv(filePath)
+      this.post('csv:preview:response', result)
+    } catch (err) {
+      this.post('csv:preview:response', { error: err instanceof Error ? err.message : String(err) })
+    }
+  }
+
+  private async handleCsvImport(payload: CsvImportParams): Promise<void> {
+    try {
+      const driver = await this.connectionManager.connect(this.connectionId)
+      const inserted = await importCsvToTable(payload, driver, (done) => {
+        this.post('csv:progress', { done })
+      })
+      this.post('csv:import:response', { inserted })
+    } catch (err) {
+      this.post('csv:import:response', { error: err instanceof Error ? err.message : String(err) })
     }
   }
 }
