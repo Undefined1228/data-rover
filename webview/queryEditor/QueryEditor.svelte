@@ -238,7 +238,7 @@
           }),
           Prec.highest(keymap.of([
             { key: 'Mod-Enter', run: () => { void runQuery(); return true } },
-            { key: 'Alt-Shift-f', run: () => { formatQuery(); return true } },
+            { key: 'Mod-Alt-f', run: () => { formatQuery(); return true } },
           ])),
         ],
       }),
@@ -537,7 +537,7 @@
       >
         <WrapText class="h-3 w-3" />
         포맷
-        <kbd class="ml-0.5 rounded bg-muted px-1 py-0.5 font-mono text-[10px] text-muted-foreground/70 border border-border/60">⇧Alt F</kbd>
+        <kbd class="ml-0.5 rounded bg-muted px-1 py-0.5 font-mono text-[10px] text-muted-foreground/70 border border-border/60">⌘Alt F</kbd>
       </button>
 
       <div class="mx-1 h-4 w-px bg-border"></div>
