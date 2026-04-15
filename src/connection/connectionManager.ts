@@ -30,6 +30,7 @@ export class ConnectionManager {
   }
 
   async add(data: ConnectionFormData): Promise<ConnectionConfig> {
+    console.log(`[ConnectionManager] add — name="${data.name}", dbType=${data.dbType}, inputMode=${data.inputMode}`)
     const now = new Date().toISOString()
     const conn: ConnectionConfig = {
       id: randomUUID(),
@@ -51,8 +52,11 @@ export class ConnectionManager {
       createdAt: now,
       updatedAt: now,
     }
+    console.log(`[ConnectionManager] add — saving secrets for id=${conn.id}`)
     await this.saveSecrets(conn.id, data)
+    console.log(`[ConnectionManager] add — updating globalState`)
     await this.context.globalState.update(STATE_KEY, [...this.getAll(), conn])
+    console.log(`[ConnectionManager] add — done, total=${this.getAll().length}`)
     return conn
   }
 

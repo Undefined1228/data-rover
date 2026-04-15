@@ -40,6 +40,7 @@ export class ConnectionFormPanel extends PanelBase {
   }
 
   protected async onMessage(message: { type: string; payload?: unknown }): Promise<void> {
+    console.log(`[ConnectionForm] onMessage — type=${message.type}`)
     switch (message.type) {
       case 'conn:get':
         await this.handleGet()
@@ -82,30 +83,38 @@ export class ConnectionFormPanel extends PanelBase {
   }
 
   private async handleSave(data: ConnectionFormData): Promise<void> {
+    const action = this.connectionId ? 'update' : 'add'
+    console.log(`[ConnectionForm] handleSave start — action=${action}, name="${data.name}", dbType=${data.dbType}`)
     try {
       const conn = this.connectionId
         ? await this.connectionManager.update(this.connectionId, data)
         : await this.connectionManager.add(data)
+      console.log(`[ConnectionForm] handleSave success — id=${conn.id}`)
       this.post('conn:save:response', { ok: true, conn })
       vscode.commands.executeCommand('data-rover.refreshConnections')
       this.panel.dispose()
     } catch (err) {
+      console.error(`[ConnectionForm] handleSave error —`, err)
       this.post('conn:save:response', { ok: false, message: (err as Error).message })
     }
   }
 
   private async handleTestConnection(data: ConnectionFormData): Promise<void> {
     const start = Date.now()
+    console.log(`[ConnectionForm] handleTestConnection start — dbType=${data.dbType}, host=${data.host}, port=${data.port}, sshEnabled=${data.sshEnabled}`)
     try {
       let host = data.host || null
       let port = data.port ? Number(data.port) : null
 
       if (data.sshEnabled && data.sshHost && data.sshUsername) {
+        console.log(`[ConnectionForm] SSH 터널 연결 시도 — sshHost=${data.sshHost}, sshPort=${data.sshPort}, sshUsername=${data.sshUsername}, authMethod=${data.sshAuthMethod}`)
         let privateKey: string | undefined
         if (data.sshAuthMethod === 'key' && data.sshKeyPath) {
           try {
             privateKey = fs.readFileSync(data.sshKeyPath, 'utf-8')
+            console.log(`[ConnectionForm] SSH 키 파일 로드 성공 — ${data.sshKeyPath}`)
           } catch {
+            console.error(`[ConnectionForm] SSH 키 파일 로드 실패 — ${data.sshKeyPath}`)
             this.post('db:test-connection:response', {
               ok: false,
               message: `SSH 키 파일을 읽을 수 없습니다: ${data.sshKeyPath}`,
@@ -133,10 +142,12 @@ export class ConnectionFormPanel extends PanelBase {
           remoteHost,
           remotePort
         )
+        console.log(`[ConnectionForm] SSH 터널 성공 — localPort=${localPort}`)
         host = '127.0.0.1'
         port = localPort
       }
 
+      console.log(`[ConnectionForm] DB 드라이버 연결 시도 — host=${host}, port=${port}, db=${data.databaseName}, user=${data.username}`)
       const tempConfig = {
         id: '__test__',
         name: '',
@@ -165,8 +176,10 @@ export class ConnectionFormPanel extends PanelBase {
 
       await driver.testConnection()
       const elapsed = Date.now() - start
+      console.log(`[ConnectionForm] handleTestConnection success — ${elapsed}ms`)
       this.post('db:test-connection:response', { ok: true, message: `연결 성공 (${elapsed}ms)` })
     } catch (err) {
+      console.error(`[ConnectionForm] handleTestConnection error —`, err)
       this.post('db:test-connection:response', { ok: false, message: (err as Error).message })
     } finally {
       closeSshTunnel(TEST_TUNNEL_ID)

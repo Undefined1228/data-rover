@@ -166,7 +166,7 @@
       if (!url.trim()) newErrors.add('url')
     } else {
       if (!host.trim()) newErrors.add('host')
-      if (!port.trim()) newErrors.add('port')
+      if (!String(port).trim()) newErrors.add('port')
     }
     if (sshEnabled) {
       if (!sshHost.trim()) newErrors.add('sshHost')
@@ -184,7 +184,7 @@
       dbType,
       inputMode,
       host,
-      port,
+      port: String(port),
       databaseName,
       username,
       password,
@@ -192,7 +192,7 @@
       color,
       sshEnabled,
       sshHost: sshEnabled ? sshHost : '',
-      sshPort: sshEnabled ? sshPort : '',
+      sshPort: sshEnabled ? String(sshPort) : '',
       sshUsername: sshEnabled ? sshUsername : '',
       sshAuthMethod,
       sshPassword: sshEnabled && sshAuthMethod === 'password' ? sshPassword : '',
@@ -202,7 +202,11 @@
   }
 
   async function handleTest(): Promise<void> {
-    if (!validate()) return
+    console.log('[ConnectionForm] handleTest clicked')
+    if (!validate()) {
+      console.warn('[ConnectionForm] validate 실패 — errors:', [...errors])
+      return
+    }
     testing = true
     testResult = null
     try {
@@ -219,7 +223,11 @@
   }
 
   async function handleSave(): Promise<void> {
-    if (!validate()) return
+    console.log('[ConnectionForm] handleSave clicked')
+    if (!validate()) {
+      console.warn('[ConnectionForm] validate 실패 — errors:', [...errors])
+      return
+    }
     saving = true
     try {
       const result = await api.request<{ ok: boolean; message?: string }>(
