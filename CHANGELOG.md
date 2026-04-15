@@ -1,5 +1,10 @@
 # Changelog
 
+## [1.3.1] - 2026-04-15
+
+### 수정
+- 쿼리 에디터 포맷 단축키를 `Shift+Alt+F` → `Ctrl+Alt+F` (`Cmd+Alt+F`)로 변경 — VS Code가 `Shift+Alt+F`를 Format Document로 가로채 webview에 전달되지 않던 문제 수정
+
 ## [1.3.0] - 2026-04-15
 
 ### 추가
