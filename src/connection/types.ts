@@ -209,3 +209,14 @@ export interface TableStatRow {
   lastVacuum?: string | null
   lastAutovacuum?: string | null
 }
+
+export interface DbInfo {
+  version: string
+  host: string
+  port: number
+  database: string
+  user: string
+  settings: { name: string; value: string; unit: string | null }[]
+  databases: { name: string; sizeBytes: number; connections: number }[]
+  stats: { commits: number; rollbacks: number; cacheHitRatio: number | null } | null
+}

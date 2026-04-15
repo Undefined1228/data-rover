@@ -5,7 +5,7 @@ import type {
   SchemaInfo, SchemaObjects, ColumnInfo, FKInfo, IndexInfo,
   TableInfo, ViewInfo,
   SelectAllParams, DataChangesParams, ExplainResult, ExplainNode,
-  SessionRow, LockRow, TableStatRow
+  SessionRow, LockRow, TableStatRow, DbInfo
 } from '../connection/types'
 import {
   buildMysqlDDL, buildAlterTableMysqlDDL,
@@ -679,6 +679,60 @@ export class MysqlDriver implements IDriver {
       result[tbl].push(row.COLUMN_NAME as string)
     }
     return result
+  }
+
+  async getDbInfo(): Promise<DbInfo> {
+    const conn = this.getConn()
+    const [[versionRow], [connRow], [varRows], [dbRows], [statRows]] = await Promise.all([
+      conn.query<mysql.RowDataPacket[]>(`SELECT VERSION() AS version`),
+      conn.query<mysql.RowDataPacket[]>(`SELECT @@hostname AS host, @@port AS port, DATABASE() AS database, USER() AS user`),
+      conn.query<mysql.RowDataPacket[]>(`
+        SHOW VARIABLES WHERE Variable_name IN (
+          'max_connections','innodb_buffer_pool_size','innodb_log_file_size',
+          'thread_cache_size','query_cache_size','wait_timeout',
+          'character_set_server','collation_server','time_zone','sql_mode'
+        )
+      `),
+      conn.query<mysql.RowDataPacket[]>(`
+        SELECT schema_name AS name,
+               SUM(data_length + index_length) AS size_bytes,
+               0 AS connections
+        FROM information_schema.SCHEMATA
+        LEFT JOIN information_schema.TABLES USING (table_schema)
+        WHERE schema_name NOT IN ('information_schema','performance_schema','mysql','sys')
+        GROUP BY schema_name
+        ORDER BY size_bytes DESC
+      `),
+      conn.query<mysql.RowDataPacket[]>(`
+        SHOW GLOBAL STATUS WHERE Variable_name IN ('Com_commit','Com_rollback','Innodb_buffer_pool_reads','Innodb_buffer_pool_read_requests')
+      `),
+    ])
+    const statMap = Object.fromEntries((statRows as mysql.RowDataPacket[]).map((r) => [r.Variable_name as string, Number(r.Value)]))
+    const reads = statMap['Innodb_buffer_pool_read_requests'] ?? 0
+    const diskReads = statMap['Innodb_buffer_pool_reads'] ?? 0
+    const cacheHitRatio = reads > 0 ? Math.round((1 - diskReads / reads) * 10000) / 100 : null
+    return {
+      version: String((versionRow as mysql.RowDataPacket).version ?? ''),
+      host: String((connRow as mysql.RowDataPacket).host ?? this.config.host ?? ''),
+      port: Number((connRow as mysql.RowDataPacket).port ?? this.config.port ?? 3306),
+      database: String((connRow as mysql.RowDataPacket).database ?? ''),
+      user: String((connRow as mysql.RowDataPacket).user ?? ''),
+      settings: (varRows as mysql.RowDataPacket[]).map((r) => ({
+        name: String(r.Variable_name),
+        value: String(r.Value),
+        unit: null,
+      })),
+      databases: (dbRows as mysql.RowDataPacket[]).map((r) => ({
+        name: String(r.name ?? ''),
+        sizeBytes: Number(r.size_bytes ?? 0),
+        connections: 0,
+      })),
+      stats: {
+        commits: statMap['Com_commit'] ?? 0,
+        rollbacks: statMap['Com_rollback'] ?? 0,
+        cacheHitRatio,
+      },
+    }
   }
 
   async getRoles(): Promise<string[]> {

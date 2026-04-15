@@ -1,7 +1,7 @@
 import type {
   QueryResult, BatchQueryResponse, SchemaInfo, SchemaObjects, TableInfo,
   SelectAllParams, DataChangesParams, ExplainResult,
-  SessionRow, LockRow, TableStatRow
+  SessionRow, LockRow, TableStatRow, DbInfo
 } from '../connection/types'
 import type { CreateTableParams, AlterTableParams, CreateIndexParams } from './ddlBuilder'
 
@@ -47,6 +47,7 @@ export interface IDriver {
   killSession(sessionId: number, mode: 'cancel' | 'terminate'): Promise<{ success: boolean }>
   getLocks(): Promise<LockRow[]>
   getTableStats(): Promise<TableStatRow[]>
+  getDbInfo(): Promise<DbInfo>
 
   getErdData(schemaName: string): Promise<TableInfo[]>
 

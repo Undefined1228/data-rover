@@ -2,7 +2,7 @@
   import { onMount, onDestroy } from 'svelte'
   import { api } from '$shared/api'
 
-  type Tab = 'sessions' | 'locks' | 'stats'
+  type Tab = 'sessions' | 'locks' | 'stats' | 'dbinfo'
 
   interface SessionRow {
     id: number
@@ -43,17 +43,31 @@
   let refreshIntervalSec = $state(10)
   let lastRefreshed = $state<Date | null>(null)
 
+  interface DbInfo {
+    version: string
+    host: string
+    port: number
+    database: string
+    user: string
+    settings: { name: string; value: string; unit: string | null }[]
+    databases: { name: string; sizeBytes: number; connections: number }[]
+    stats: { commits: number; rollbacks: number; cacheHitRatio: number | null } | null
+  }
+
   let sessions = $state<SessionRow[]>([])
   let locks = $state<LockRow[]>([])
   let stats = $state<TableStatRow[]>([])
+  let dbInfo = $state<DbInfo | null>(null)
 
   let sessionsLoading = $state(true)
   let locksLoading = $state(false)
   let statsLoading = $state(false)
+  let dbInfoLoading = $state(false)
 
   let sessionsError = $state<string | null>(null)
   let locksError = $state<string | null>(null)
   let statsError = $state<string | null>(null)
+  let dbInfoError = $state<string | null>(null)
 
   let isPostgres = $derived(dbType === 'postgresql')
 
@@ -113,10 +127,29 @@
     }
   }
 
-  function fetchCurrentTab(): void {
+  async function fetchDbInfo(): Promise<void> {
+    dbInfoLoading = true
+    dbInfoError = null
+    try {
+      const result = await api.request<DbInfo | { error: string }>('monitor:db-info')
+      if (!Array.isArray(result) && typeof result === 'object' && result !== null && 'error' in result) {
+        dbInfoError = (result as { error: string }).error
+      } else {
+        dbInfo = result as DbInfo
+        lastRefreshed = new Date()
+      }
+    } catch (err) {
+      dbInfoError = err instanceof Error ? err.message : String(err)
+    } finally {
+      dbInfoLoading = false
+    }
+  }
+
+  function fetchCurrentTab(autoRefresh = false): void {
     if (activeTab === 'sessions') void fetchSessions()
     else if (activeTab === 'locks') void fetchLocks()
-    else void fetchStats()
+    else if (activeTab === 'stats') void fetchStats()
+    else if (!autoRefresh) void fetchDbInfo()
   }
 
   function switchTab(tab: Tab): void {
@@ -186,7 +219,7 @@
     const init = await api.request<{ dbType: string }>('webview:ready')
     dbType = init.dbType
     await fetchSessions()
-    unsubAutoRefresh = api.on('monitor:auto-refresh', () => { fetchCurrentTab() })
+    unsubAutoRefresh = api.on('monitor:auto-refresh', () => { fetchCurrentTab(true) })
   })
 
   onDestroy(() => { unsubAutoRefresh?.() })
@@ -196,7 +229,7 @@
   <!-- Toolbar -->
   <div class="flex shrink-0 items-center gap-2 border-b border-[var(--vscode-panel-border)] px-3 py-1.5">
     <div class="flex gap-0.5">
-      {#each [['sessions', '활성 세션'], ['locks', '잠금 현황'], ['stats', '테이블 통계']] as [tab, label]}
+      {#each [['sessions', '활성 세션'], ['locks', '잠금 현황'], ['stats', '테이블 통계'], ['dbinfo', 'DB 정보']] as [tab, label]}
         <button
           onclick={() => switchTab(tab as Tab)}
           class="rounded px-3 py-1 text-xs font-medium transition-colors {activeTab === tab
@@ -347,6 +380,117 @@
             {/each}
           </tbody>
         </table>
+      {/if}
+
+    <!-- DB Info Tab -->
+    {:else if activeTab === 'dbinfo'}
+      {#if dbInfoLoading}
+        <div class="flex h-full items-center justify-center">
+          <div class="h-5 w-5 animate-spin rounded-full border-2 border-[var(--vscode-panel-border)] border-t-[var(--vscode-editor-foreground)]"></div>
+        </div>
+      {:else if dbInfoError}
+        <div class="flex h-full items-center justify-center p-4">
+          <p class="text-sm text-[var(--vscode-errorForeground)]">{dbInfoError}</p>
+        </div>
+      {:else if dbInfo}
+        <div class="p-4 flex flex-col gap-4 text-xs">
+
+          <!-- 기본 정보 -->
+          <section>
+            <h3 class="mb-2 text-[11px] font-semibold uppercase tracking-wide text-[var(--vscode-descriptionForeground)]">기본 정보</h3>
+            <table class="w-full border-collapse">
+              <tbody>
+                {#each [
+                  ['버전', dbInfo.version],
+                  ['호스트', dbInfo.host || '—'],
+                  ['포트', String(dbInfo.port)],
+                  ['데이터베이스', dbInfo.database || '—'],
+                  ['사용자', dbInfo.user || '—'],
+                ] as [label, value]}
+                  <tr class="border-b border-[var(--vscode-panel-border)]/40">
+                    <td class="py-1.5 pr-4 whitespace-nowrap text-[var(--vscode-descriptionForeground)] w-28">{label}</td>
+                    <td class="py-1.5 font-mono break-all">{value}</td>
+                  </tr>
+                {/each}
+              </tbody>
+            </table>
+          </section>
+
+          <!-- 크기 / 통계 -->
+          {#if dbInfo.stats || dbInfo.databases.length > 0}
+            <section>
+              <h3 class="mb-2 text-[11px] font-semibold uppercase tracking-wide text-[var(--vscode-descriptionForeground)]">크기 / 통계</h3>
+              {#if dbInfo.stats}
+                <table class="w-full border-collapse mb-3">
+                  <tbody>
+                    <tr class="border-b border-[var(--vscode-panel-border)]/40">
+                      <td class="py-1.5 pr-4 whitespace-nowrap text-[var(--vscode-descriptionForeground)] w-28">캐시 히트율</td>
+                      <td class="py-1.5 font-mono {(dbInfo.stats.cacheHitRatio ?? 100) < 90 ? 'text-yellow-400' : ''}">
+                        {dbInfo.stats.cacheHitRatio != null ? `${dbInfo.stats.cacheHitRatio}%` : '—'}
+                      </td>
+                    </tr>
+                    <tr class="border-b border-[var(--vscode-panel-border)]/40">
+                      <td class="py-1.5 pr-4 whitespace-nowrap text-[var(--vscode-descriptionForeground)]">커밋</td>
+                      <td class="py-1.5 font-mono">{dbInfo.stats.commits.toLocaleString()}</td>
+                    </tr>
+                    <tr class="border-b border-[var(--vscode-panel-border)]/40">
+                      <td class="py-1.5 pr-4 whitespace-nowrap text-[var(--vscode-descriptionForeground)]">롤백</td>
+                      <td class="py-1.5 font-mono">{dbInfo.stats.rollbacks.toLocaleString()}</td>
+                    </tr>
+                  </tbody>
+                </table>
+              {/if}
+              {#if dbInfo.databases.length > 0}
+                <table class="w-full border-collapse">
+                  <thead>
+                    <tr class="border-b border-[var(--vscode-panel-border)]">
+                      <th class="py-1.5 pr-4 text-left font-medium text-[var(--vscode-descriptionForeground)]">데이터베이스</th>
+                      <th class="py-1.5 pr-4 text-right font-medium text-[var(--vscode-descriptionForeground)] whitespace-nowrap">크기</th>
+                      <th class="py-1.5 text-right font-medium text-[var(--vscode-descriptionForeground)] whitespace-nowrap">연결 수</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {#each dbInfo.databases as db}
+                      <tr class="border-b border-[var(--vscode-panel-border)]/40 hover:bg-[var(--vscode-list-hoverBackground)]">
+                        <td class="py-1.5 pr-4 whitespace-nowrap">{db.name}</td>
+                        <td class="py-1.5 pr-4 text-right font-mono text-[var(--vscode-descriptionForeground)]">{formatBytes(db.sizeBytes)}</td>
+                        <td class="py-1.5 text-right font-mono text-[var(--vscode-descriptionForeground)]">{db.connections > 0 ? db.connections : '—'}</td>
+                      </tr>
+                    {/each}
+                  </tbody>
+                </table>
+              {/if}
+            </section>
+          {/if}
+
+          <!-- 설정값 -->
+          {#if dbInfo.settings.length > 0}
+            <section>
+              <h3 class="mb-2 text-[11px] font-semibold uppercase tracking-wide text-[var(--vscode-descriptionForeground)]">설정값</h3>
+              <table class="w-full border-collapse">
+                <thead>
+                  <tr class="border-b border-[var(--vscode-panel-border)]">
+                    <th class="py-1.5 pr-4 text-left font-medium text-[var(--vscode-descriptionForeground)]">파라미터</th>
+                    <th class="py-1.5 text-left font-medium text-[var(--vscode-descriptionForeground)]">값</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {#each dbInfo.settings as s}
+                    <tr class="border-b border-[var(--vscode-panel-border)]/40 hover:bg-[var(--vscode-list-hoverBackground)]">
+                      <td class="py-1.5 pr-4 whitespace-nowrap font-mono text-[var(--vscode-descriptionForeground)]">{s.name}</td>
+                      <td class="py-1.5 font-mono">{s.value}{s.unit ? ` ${s.unit}` : ''}</td>
+                    </tr>
+                  {/each}
+                </tbody>
+              </table>
+            </section>
+          {/if}
+
+        </div>
+      {:else}
+        <div class="flex h-full items-center justify-center">
+          <p class="text-[var(--vscode-descriptionForeground)]">데이터가 없습니다.</p>
+        </div>
       {/if}
 
     <!-- Table Stats Tab -->

@@ -60,6 +60,9 @@ export class SessionMonitorPanel extends PanelBase {
       case 'monitor:table-stats':
         void this.handleTableStats()
         break
+      case 'monitor:db-info':
+        void this.handleDbInfo()
+        break
       case 'monitor:set-interval': {
         const { interval } = message.payload as { interval: number }
         this.refreshIntervalMs = interval
@@ -123,6 +126,16 @@ export class SessionMonitorPanel extends PanelBase {
       this.post('monitor:table-stats:response', stats)
     } catch (err) {
       this.post('monitor:table-stats:response', { error: err instanceof Error ? err.message : String(err) })
+    }
+  }
+
+  private async handleDbInfo(): Promise<void> {
+    try {
+      const driver = await this.connectionManager.connect(this.connectionId)
+      const info = await driver.getDbInfo()
+      this.post('monitor:db-info:response', info)
+    } catch (err) {
+      this.post('monitor:db-info:response', { error: err instanceof Error ? err.message : String(err) })
     }
   }
 

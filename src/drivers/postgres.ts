@@ -5,7 +5,7 @@ import type {
   SchemaInfo, SchemaObjects, ColumnInfo, FKInfo, IndexInfo,
   TableInfo, ViewInfo, MatViewInfo,
   SelectAllParams, DataChangesParams, ExplainResult, ExplainNode,
-  SessionRow, LockRow, TableStatRow
+  SessionRow, LockRow, TableStatRow, DbInfo
 } from '../connection/types'
 import {
   buildPostgresDDL, buildAlterTableDDL,
@@ -246,7 +246,13 @@ export class PostgresDriver implements IDriver {
       `SELECT p.proname AS name
        FROM pg_proc p
        JOIN pg_namespace n ON p.pronamespace = n.oid
-       WHERE n.nspname = $1 AND p.prokind IN ('f', 'p')
+       WHERE n.nspname = $1
+         AND (
+           (pg_catalog.pg_get_function_identity_arguments(p.oid) IS NOT NULL)
+           AND NOT EXISTS (
+             SELECT 1 FROM pg_aggregate WHERE aggfnoid = p.oid
+           )
+         )
        ORDER BY p.proname`,
       [schemaName]
     )
@@ -304,16 +310,15 @@ export class PostgresDriver implements IDriver {
       [schemaName]
     )
     const sequencesResult = await this.client.query(
-      `SELECT s.sequencename,
+      `SELECT seq_class.relname AS sequencename,
               d.refobjsubid,
               c.relname AS table_name
-       FROM pg_sequences s
-       JOIN pg_class seq_class ON seq_class.relname = s.sequencename
-         AND seq_class.relnamespace = (SELECT oid FROM pg_namespace WHERE nspname = $1)
+       FROM pg_class seq_class
+       JOIN pg_namespace n ON n.oid = seq_class.relnamespace AND n.nspname = $1
        LEFT JOIN pg_depend d ON d.objid = seq_class.oid AND d.deptype = 'a'
        LEFT JOIN pg_class c ON c.oid = d.refobjid
-       WHERE s.schemaname = $1
-       ORDER BY s.sequencename`,
+       WHERE seq_class.relkind = 'S'
+       ORDER BY seq_class.relname`,
       [schemaName]
     )
     const fkResult = tableRelNames.length > 0
@@ -715,6 +720,65 @@ export class PostgresDriver implements IDriver {
       lastVacuum: r.last_vacuum ? String(r.last_vacuum) : null,
       lastAutovacuum: r.last_autovacuum ? String(r.last_autovacuum) : null,
     }))
+  }
+
+  async getDbInfo(): Promise<DbInfo> {
+    const [versionRes, connRes, settingsRes, dbSizesRes, statsRes] = await Promise.all([
+      this.client.query(`SELECT version()`),
+      this.client.query(`SELECT inet_server_addr() AS host, inet_server_port() AS port, current_database() AS database, current_user AS "user"`),
+      this.client.query(`
+        SELECT name, setting AS value, unit
+        FROM pg_settings
+        WHERE name IN (
+          'max_connections','shared_buffers','work_mem','maintenance_work_mem',
+          'effective_cache_size','wal_level','autovacuum','log_min_duration_statement',
+          'default_transaction_isolation','TimeZone'
+        )
+        ORDER BY name
+      `),
+      this.client.query(`
+        SELECT datname AS name,
+               pg_database_size(datname) AS size_bytes,
+               (SELECT count(*) FROM pg_stat_activity WHERE datname = d.datname) AS connections
+        FROM pg_database d
+        WHERE datistemplate = false
+        ORDER BY size_bytes DESC
+      `),
+      this.client.query(`
+        SELECT sum(xact_commit) AS commits, sum(xact_rollback) AS rollbacks,
+               CASE WHEN sum(blks_hit) + sum(blks_read) = 0 THEN NULL
+                    ELSE round(sum(blks_hit)::numeric / (sum(blks_hit) + sum(blks_read)) * 100, 2)
+               END AS cache_hit_ratio
+        FROM pg_stat_database
+        WHERE datname = current_database()
+      `),
+    ])
+    const conn = connRes.rows[0]
+    const stat = statsRes.rows[0]
+    return {
+      version: versionRes.rows[0].version as string,
+      host: conn.host ?? this.config.host ?? '',
+      port: Number(conn.port ?? this.config.port ?? 5432),
+      database: String(conn.database ?? ''),
+      user: String(conn.user ?? ''),
+      settings: settingsRes.rows.map((r) => ({
+        name: String(r.name),
+        value: String(r.value),
+        unit: r.unit ? String(r.unit) : null,
+      })),
+      databases: dbSizesRes.rows.map((r) => ({
+        name: String(r.name),
+        sizeBytes: Number(r.size_bytes),
+        connections: Number(r.connections),
+      })),
+      stats: stat
+        ? {
+            commits: Number(stat.commits ?? 0),
+            rollbacks: Number(stat.rollbacks ?? 0),
+            cacheHitRatio: stat.cache_hit_ratio != null ? Number(stat.cache_hit_ratio) : null,
+          }
+        : null,
+    }
   }
 
   async getRoles(): Promise<string[]> {
